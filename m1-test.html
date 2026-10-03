@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>M1 判定テスト</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff3b6b;--green:#16a34a;--orange:#ea580c;--red:#dc2626;--purple:#7c3aed;--ink:#1f2a44;--bg1:#fde2ec;--bg2:#dbeafe}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{margin:0;font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+main{max-width:980px;margin:0 auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+h1{font-size:20px;margin:4px 0}
+.card{background:#fffffff0;border-radius:20px;box-shadow:0 6px 20px #0001;padding:14px 16px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+input[type=text]{font:inherit;font-size:20px;font-weight:800;width:8em;text-align:center;padding:6px 10px;border-radius:12px;border:2px solid #f2a5bb;user-select:text;-webkit-user-select:text}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:9px 16px;font-size:16px;background:#fff;color:var(--ink);box-shadow:0 2px 0 #0002,0 0 0 1px #0001;cursor:pointer}
+button:active{transform:translateY(1px);box-shadow:none}
+button.on{background:var(--purple);color:#fff}
+button.main{background:linear-gradient(180deg,#ff6b95,var(--pink));color:#fff;font-size:22px;padding:12px 40px;box-shadow:0 4px 0 #b3123f}
+.words button{font-family:"Klee One",serif;font-size:18px;padding:6px 12px}
+#prompt{font-size:28px;font-weight:900;text-align:center;min-height:40px}
+#prompt small{display:block;font-size:14px;color:#64748b;font-weight:800}
+#padArea{width:100%;display:flex;justify-content:center}
+.wpad{position:relative;background:#fff;border-radius:16px;box-shadow:0 8px 24px #0002,0 0 0 5px #fff}
+.wpad canvas{position:absolute;inset:0;border-radius:16px}
+.wpad canvas:last-child{touch-action:none;cursor:crosshair}
+#verdict{font-size:30px;font-weight:900;text-align:center;min-height:40px}
+#verdict.ok{color:var(--green)} #verdict.ng{color:var(--red)}
+#msgs{margin:6px 0 0;padding-left:1.2em;font-weight:800;line-height:1.8}
+.legend{font-size:13px;font-weight:800;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.fb button{font-size:15px}
+table{border-collapse:collapse;font-size:13px;width:100%}
+td,th{border-bottom:1px solid #eee;padding:3px 6px;text-align:center}
+.note{font-size:12px;color:#64748b}
+details summary{cursor:pointer;font-weight:800}
+#g5 button{font-family:"Klee One",serif;font-size:17px;padding:4px 8px;margin:2px;box-shadow:0 0 0 1px #0001}
+#g5 button.tried{background:#dcfce7}
+</style>
+</head>
+<body>
+<main>
+  <h1>✍ M1 判定テスト（先生用）</h1>
+
+  <div class="card">
+    <div class="row">
+      <input type="text" id="word" value="技術" placeholder="熟語（例: 確かめる）">
+      <input type="text" id="yomi" value="ぎじゅつ" placeholder="よみ">
+      <button id="setBtn">この語にする</button>
+      <button id="randBtn">🎲 5年の漢字</button>
+    </div>
+    <div class="row words" id="words" style="margin-top:8px"></div>
+    <details style="margin-top:8px"><summary>5年生の配当漢字（193字）から選ぶ</summary><div id="g5" style="margin-top:6px"></div></details>
+  </div>
+
+  <div id="prompt"></div>
+  <div id="padArea"><div id="pad"></div></div>
+
+  <div class="row">
+    <button id="undoBtn">↩ もどす</button>
+    <button id="clearBtn">🧽 ぜんぶけす</button>
+    <button id="animBtn">🎬 書き順アニメ</button>
+    <button id="modelBtn">👀 お手本</button>
+    <button id="replayBtn">▶ ふりかえり再生</button>
+  </div>
+  <button class="main" id="judgeBtn">できた!</button>
+
+  <div class="card">
+    <div id="verdict"></div>
+    <ul id="msgs"></ul>
+    <div class="legend">
+      <span><i style="background:#16a34a55"></i>OK</span>
+      <span><i style="background:#ea580c88"></i>書き順・向き・長さ</span>
+      <span><i style="background:#dc262688"></i>形</span>
+      <span><i style="background:#94a3b888"></i>書いていない画</span>
+    </div>
+    <div class="row fb" id="fbRow" style="margin-top:10px" hidden>
+      判定は正しかった？
+      <button data-fb="right">👍 正しい</button>
+      <button data-fb="wrong">👎 おかしい</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">きびしさ：
+      <button data-tol="easy">あまめ</button>
+      <button data-tol="normal" class="on">ふつう</button>
+      <button data-tol="strict">きびしめ</button>
+    </div>
+    <div class="row" style="margin-top:8px">入力：
+      <button data-pen="auto" class="on">ペン優先（ペンを使ったら指は無視）</button>
+      <button data-pen="pen">ペンだけ</button>
+      <button data-pen="any">指もOK</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span>判定ログ <b id="logCount">0</b>件（👍<b id="logRight">0</b> 👎<b id="logWrong">0</b>）</span>
+      <button id="exportBtn">⬇ ログを保存</button>
+      <button id="logClear">ログを消す</button>
+    </div>
+    <p class="note">「おかしい」を押したときの書いた線は、許容度の調整に使います。ログを保存して共有してください。</p>
+    <details style="margin-top:6px"><summary>🔧 デバッグ（各画のずれ量）</summary><div id="debug"></div></details>
+  </div>
+
+  <p class="note">判定データ: <a href="https://github.com/parsimonhi/animCJK" target="_blank">animCJK</a>（Arphic Public License）。とめ・はね・はらいは判定しません。</p>
+</main>
+
+<script src="js/kanji-data.js"></script>
+<script src="js/judge.js"></script>
+<script src="js/pad.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const G5 = '久仏仮件任似余価保修俵個備像再刊判制券則効務勢厚句可営因団圧在均基報境墓増夢妻婦容寄富導居属布師常幹序弁張往復徳志応快性恩情態慣承技招授採接提損支政故敵断旧易暴条枝査格桜検構武比永河液混減測準演潔災燃版犯状独率現留略益眼破確示祖禁移程税築精素経統絶綿総編績織罪群義耕職肥能興舌舎術衛製複規解設許証評講謝識護豊財貧責貸貿賀資賛質輸述迷退逆造過適酸鉱銅銭防限険際雑非預領額飼';
+const WORDS = [['技術', 'ぎじゅつ'], ['貿易', 'ぼうえき'], ['検査', 'けんさ'], ['確かめる', 'たしかめる'], ['険しい', 'けわしい'], ['混ぜる', 'まぜる'],
+  ['責任', 'せきにん'], ['規則', 'きそく'], ['永久', 'えいきゅう'], ['迷う', 'まよう'], ['輸出', 'ゆしゅつ'], ['増える', 'ふえる'], ['土', 'つち'], ['士', 'し']];
+const LOGKEY = 'kanjiM1.log';
+
+let tol = 'normal', cur = null, lastJudge = null;
+const pad = new WritingPad($('#pad'), { penMode: 'auto' });
+
+async function setWord(word, yomi) {
+  word = word.trim(); yomi = (yomi || '').trim();
+  if (!word) return;
+  $('#word').value = word; $('#yomi').value = yomi;
+  const segs = KanjiData.parseWord(word);
+  const kanji = segs.filter(s => s.type === 'kanji').map(s => s.ch);
+  if (!kanji.length) { showVerdict('ng', '漢字が入っていません', []); return; }
+  const tmpls = await Promise.all(kanji.map(ch => KanjiData.get(ch).catch(() => null)));
+  const miss = kanji.filter((_, i) => !tmpls[i]);
+  cur = { word, yomi, segs, tmpls };
+  pad.setWord(segs, tmpls);
+  $('#prompt').innerHTML = '';
+  $('#prompt').append(yomi || '（よみ未入力）');
+  const sm = document.createElement('small'); sm.textContent = `${kanji.length}字・${tmpls.map(t => t ? t.lines.length + '画' : '?').join(' / ')}`;
+  $('#prompt').appendChild(sm);
+  showVerdict(miss.length ? 'ng' : '', miss.length ? `「${miss.join('')}」のデータがありません` : '', []);
+  $('#fbRow').hidden = true; $('#debug').innerHTML = ''; lastJudge = null;
+}
+
+function judge() {
+  if (!cur || cur.tmpls.some(t => !t)) return;
+  const { strokes } = pad.strokesByCell();
+  const r = KanjiJudge.judgeWord(strokes, cur.tmpls.map(t => t.lines), { tolerance: tol });
+  pad.showResult(r);
+  const kanji = cur.segs.filter(s => s.type === 'kanji').map(s => s.ch);
+  const msgs = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
+  showVerdict(r.ok ? 'ok' : 'ng', (r.ok ? '⭕ 正解!' : '❌ ざんねん') + `　お手本との一致率 ${r.score}%`, msgs);
+  lastJudge = { r, strokes: pad.exportStrokes(), at: Date.now() };
+  $('#fbRow').hidden = false; $$('[data-fb]').forEach(b => b.disabled = false);
+  $$('#g5 button').forEach(b => { if (kanji.includes(b.textContent)) b.classList.add('tried'); });
+  $('#debug').innerHTML = r.chars.map((c, k) =>
+    `<p style="margin:6px 0 2px;font-weight:900">「${kanji[k]}」 許容量 ${KanjiJudge.LEVELS[tol]}　${c.ok ? '⭕' : '❌ ' + c.reasons.map(x => x.type).join(',')}</p>` +
+    `<table><tr><th>書いた画</th><th>お手本</th><th>ずれ</th><th>逆向き</th><th>状態</th></tr>` +
+    c.debug.map(d => `<tr><td>${d.user}</td><td>${d.tmpl}</td><td>${d.cost.toFixed(3)}</td><td>${d.costRev.toFixed(3)}</td><td>${d.status}</td></tr>`).join('') + '</table>').join('');
+}
+function showVerdict(cls, text, msgs) {
+  const v = $('#verdict'); v.className = cls; v.textContent = text;
+  const ul = $('#msgs'); ul.innerHTML = '';
+  for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
+}
+
+/* ===== ログ（許容度の調整用） ===== */
+function loadLog() { try { return JSON.parse(localStorage.getItem(LOGKEY)) || []; } catch (e) { return []; } }
+function saveLog(l) { try { localStorage.setItem(LOGKEY, JSON.stringify(l)); } catch (e) { alert('保存できませんでした（容量不足の可能性）。ログを保存して消してください。'); } }
+function renderLog() {
+  const l = loadLog();
+  $('#logCount').textContent = l.length;
+  $('#logRight').textContent = l.filter(x => x.fb === 'right').length;
+  $('#logWrong').textContent = l.filter(x => x.fb === 'wrong').length;
+}
+$$('[data-fb]').forEach(b => b.onclick = () => {
+  if (!lastJudge) return;
+  const l = loadLog();
+  l.push({ word: cur.word, tol, ok: lastJudge.r.ok, reasons: lastJudge.r.chars.map(c => c.reasons), fb: b.dataset.fb, strokes: lastJudge.strokes, at: lastJudge.at, ua: navigator.userAgent.slice(0, 80) });
+  saveLog(l); renderLog();
+  $$('[data-fb]').forEach(x => x.disabled = true);
+  $('#fbRow').hidden = true;
+});
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(loadLog())], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `kanji-m1-log-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#logClear').onclick = () => { if (confirm('判定ログをすべて消しますか？')) { saveLog([]); renderLog(); } };
+
+/* ===== UI ===== */
+WORDS.forEach(([w, y]) => { const b = document.createElement('button'); b.textContent = w; b.onclick = () => setWord(w, y); $('#words').appendChild(b); });
+[...G5].forEach(ch => { const b = document.createElement('button'); b.textContent = ch; b.onclick = () => setWord(ch, ''); $('#g5').appendChild(b); });
+$('#setBtn').onclick = () => setWord($('#word').value, $('#yomi').value);
+$('#word').onkeydown = $('#yomi').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) setWord($('#word').value, $('#yomi').value); };
+$('#randBtn').onclick = () => { const ch = [...G5][Math.floor(Math.random() * G5.length)]; setWord(ch, ''); };
+$('#undoBtn').onclick = () => { pad.undo(); };
+$('#clearBtn').onclick = () => { pad.clear(); showVerdict('', '', []); $('#fbRow').hidden = true; };
+$('#modelBtn').onclick = () => { $('#modelBtn').classList.toggle('on', pad.toggleModel()); };
+$('#replayBtn').onclick = () => pad.replay();
+$('#animBtn').onclick = () => {
+  if (pad.animating) { pad.stopModel(); $('#animBtn').classList.remove('on'); return; }   // もう一度押すと止まる
+  $('#animBtn').classList.add('on');
+  pad.animateModel({ onDone: () => $('#animBtn').classList.remove('on') });
+};
+$('#judgeBtn').onclick = judge;
+$$('[data-tol]').forEach(b => b.onclick = () => {
+  tol = b.dataset.tol; $$('[data-tol]').forEach(x => x.classList.toggle('on', x === b));
+  if (pad.result) judge();
+});
+$$('[data-pen]').forEach(b => b.onclick = () => {
+  pad.opt.penMode = b.dataset.pen; $$('[data-pen]').forEach(x => x.classList.toggle('on', x === b));
+});
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => pad.layout(), 200); });
+
+window.__m1 = { pad, setWord, judge, get cur() { return cur; } };
+renderLog();
+setWord('技術', 'ぎじゅつ');
+</script>
+</body>
+</html>

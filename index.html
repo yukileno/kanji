@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>かんじドリル フィーバー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#ff3b6b; --yellow:#ffcc00; --green:#22c55e; --blue:#3b9cff; --purple:#a855f7; --orange:#ff8a00;
+  --ink:#1f2a44; --card:#ffffffee;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{
+  font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);
+  background:#ffd6e7;overflow-x:hidden;user-select:none;-webkit-user-select:none;
+}
+#bg{position:fixed;inset:-20%;z-index:-1;
+  background:linear-gradient(120deg,#ff9a9e,#fecfef,#a1c4fd,#c2e9fb,#d4fc79,#ffecd2);
+  background-size:400% 400%;animation:bgmove 18s ease infinite}
+body.fever #bg{animation:bgmove 3s ease infinite,hue 1.2s linear infinite}
+@keyframes bgmove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes hue{to{filter:hue-rotate(360deg) saturate(1.6)}}
+
+.screen{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;align-items:center;padding:16px;gap:14px}
+.screen.on{display:flex;animation:screenIn .35s ease}
+@keyframes screenIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+.btn{
+  font:inherit;font-weight:900;border:0;cursor:pointer;color:#fff;border-radius:22px;
+  padding:16px 28px;font-size:22px;letter-spacing:.05em;
+  background:linear-gradient(180deg,#ff6b95,var(--pink));box-shadow:0 7px 0 #b3123f,0 10px 20px #0003;
+  transition:transform .08s, box-shadow .08s;text-shadow:0 2px 0 #0003;
+}
+.btn:active{transform:translateY(6px);box-shadow:0 1px 0 #b3123f,0 3px 8px #0003}
+.btn.big{font-size:clamp(22px,6vw,32px);padding:18px 34px;min-width:min(300px,86vw)}
+.btn.gold{background:linear-gradient(180deg,#ffe066,#ffb300);color:#7a3e00;text-shadow:0 2px 0 #fff8;box-shadow:0 7px 0 #b37400,0 10px 20px #0003}
+.btn.gold:active{box-shadow:0 1px 0 #b37400}
+.btn.green{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 7px 0 #0f6b30,0 10px 20px #0003}
+.btn.green:active{box-shadow:0 1px 0 #0f6b30}
+.btn.red{background:linear-gradient(180deg,#94a3b8,#64748b);box-shadow:0 7px 0 #334155,0 10px 20px #0003}
+.btn.red:active{box-shadow:0 1px 0 #334155}
+.btn.blue{background:linear-gradient(180deg,#60b0ff,#2563eb);box-shadow:0 7px 0 #1e3a8a,0 10px 20px #0003}
+.btn.blue:active{box-shadow:0 1px 0 #1e3a8a}
+.btn.fire{background:linear-gradient(180deg,#ffb347,#ff5e00);box-shadow:0 7px 0 #a33a00,0 10px 20px #0003}
+.btn.fire:active{box-shadow:0 1px 0 #a33a00}
+.btn:disabled{filter:grayscale(.8);opacity:.6}
+.mini{font:inherit;font-weight:800;border:0;border-radius:999px;padding:8px 14px;font-size:15px;background:#fff;color:var(--ink);box-shadow:0 3px 0 #0002;cursor:pointer}
+.mini:active{transform:translateY(2px);box-shadow:none}
+
+.card{background:var(--card);border-radius:28px;box-shadow:0 10px 30px #0002;padding:18px 20px;width:min(640px,100%)}
+
+/* ===== HOME ===== */
+.title{margin:44px 0 0;font-size:clamp(40px,11vw,76px);font-weight:900;line-height:1.1;text-align:center}
+.title span{display:inline-block;animation:bounce 1.6s ease-in-out infinite;
+  background:linear-gradient(180deg,#fff 0%,#fff 40%,var(--c) 41%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 5px 0 var(--d)) drop-shadow(0 0 2px #fff)}
+.title .sub{display:block;font-size:.45em;letter-spacing:.2em}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-14px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}}
+.lvcard{display:flex;align-items:center;gap:14px}
+.lvbadge{flex:none;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;font-size:28px;line-height:1;
+  background:conic-gradient(from 0deg,#ff3b6b,#ffcc00,#22c55e,#3b9cff,#a855f7,#ff3b6b);box-shadow:0 0 0 5px #fff,0 6px 16px #0003;animation:spin 6s linear infinite}
+.lvbadge b{display:grid;place-items:center;width:62px;height:62px;border-radius:50%;background:#1f2a44;animation:spin 6s linear infinite reverse}
+.lvbadge small{font-size:12px;display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.xpbar{height:20px;border-radius:999px;background:#e5e7eb;overflow:hidden;box-shadow:inset 0 2px 4px #0002}
+.xpbar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#ffcc00,#ff3b6b,#a855f7);background-size:200% 100%;animation:shine 2s linear infinite;transition:width 1s cubic-bezier(.2,1.4,.4,1)}
+@keyframes shine{to{background-position:200% 0}}
+.stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-weight:800}
+.stats div{background:#fff;border-radius:16px;padding:8px 14px;box-shadow:0 3px 0 #0001}
+.opt{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center;font-weight:800}
+.chip{font:inherit;font-weight:900;border:3px solid #fff;background:#ffffffaa;color:var(--ink);padding:8px 16px;border-radius:999px;font-size:18px;cursor:pointer}
+.chip.on{background:var(--purple);color:#fff;border-color:#fff;box-shadow:0 0 0 3px var(--purple)}
+.corner{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:5}
+
+/* ===== PLAY ===== */
+.topbar{width:min(640px,100%);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{background:#fff;border-radius:999px;padding:6px 16px;font-weight:900;font-size:20px;box-shadow:0 3px 0 #0002}
+#comboBox{height:36px;font-weight:900;font-size:28px;color:#fff;filter:drop-shadow(0 3px 0 #b3123f);transition:transform .2s}
+#comboBox.bump{animation:bump .4s}
+@keyframes bump{30%{transform:scale(1.6) rotate(-6deg)}}
+#prompt{position:relative;text-align:center;padding:14px 16px 18px}
+.ask{font-weight:800;font-size:clamp(15px,4vw,19px);color:#64748b}
+.qrow{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+#yomi{font-size:clamp(40px,12vw,72px);font-weight:900;letter-spacing:.08em;color:var(--ink);animation:yomiIn .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes yomiIn{from{transform:scale(0) rotate(-10deg)}to{transform:none}}
+#arrow{font-size:40px;font-weight:900;color:var(--pink)}
+#ansK{font-family:"Klee One",serif;font-size:clamp(52px,15vw,92px);color:#e11d48;display:inline-block;animation:flipIn .7s cubic-bezier(.2,1.5,.4,1);text-shadow:0 4px 0 #ffd1dc}
+@keyframes flipIn{0%{transform:rotateY(90deg) scale(.3)}100%{transform:none}}
+#weakBadge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#ff5e00,#ff3b6b);color:#fff;font-weight:900;padding:4px 14px;border-radius:999px;font-size:15px;white-space:nowrap;box-shadow:0 3px 0 #a33a00;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:translateX(-50%) scale(1.12)}}
+#padwrap{position:relative;border-radius:22px;box-shadow:0 10px 30px #0003,0 0 0 6px #fff;background:#fff;touch-action:none}
+#padwrap canvas{position:absolute;inset:0;display:block;border-radius:22px}
+#ink{touch-action:none;cursor:crosshair}
+#padwrap.wobble{animation:wobble .5s}
+@keyframes wobble{20%{transform:translateX(-12px) rotate(-2deg)}40%{transform:translateX(10px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+#ghost{position:absolute;inset:0;display:flex;pointer-events:none;opacity:0;transition:opacity .3s}
+#ghost.on{opacity:1}
+#ghost span{flex:1;display:grid;place-items:center;font-family:"Klee One",serif;color:#ff3b6b55;line-height:1}
+.tools{display:flex;gap:10px}
+.act{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+#actB{flex-wrap:nowrap;width:min(640px,100%)}
+#actB .btn.big{min-width:0;flex:1;padding:18px 10px;font-size:clamp(20px,5.5vw,30px)}
+#fever{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:40;font-weight:900;font-size:clamp(26px,8vw,44px);pointer-events:none;
+  background:linear-gradient(90deg,#ff3b6b,#ffcc00,#22c55e,#3b9cff,#a855f7,#ff3b6b);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 #fff) drop-shadow(0 0 8px #fff);animation:shine 1s linear infinite,feverPulse .5s ease-in-out infinite alternate;display:none}
+body.fever #fever{display:block}
+@keyframes feverPulse{to{transform:translateX(-50%) scale(1.15) rotate(-3deg)}}
+
+/* ===== FX ===== */
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+#pop{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+#flash{position:fixed;inset:0;pointer-events:none;z-index:55;background:#fff;opacity:0}
+#flash.go{animation:flash .45s ease-out}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+body.shake .screen.on{animation:shake .45s}
+body.shake2 .screen.on{animation:shake2 .6s}
+@keyframes shake{10%,50%,90%{transform:translate(-8px,4px) rotate(-1deg)}30%,70%{transform:translate(8px,-4px) rotate(1deg)}}
+@keyframes shake2{10%,50%,90%{transform:translate(-16px,8px) rotate(-2deg) scale(1.03)}30%,70%{transform:translate(16px,-8px) rotate(2deg) scale(1.03)}}
+.bigtext{position:absolute;left:50%;top:38%;white-space:nowrap;font-weight:900;font-size:clamp(46px,13vw,130px);
+  background:linear-gradient(180deg,#fff200 0%,#ffcc00 45%,#ff3b6b 55%,#a855f7 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 6px 0 #4c1d95) drop-shadow(0 0 3px #fff) drop-shadow(0 0 18px #fff);
+  animation:popin 1.3s cubic-bezier(.2,1.4,.4,1) forwards}
+.bigtext.mega{font-size:clamp(50px,15vw,150px);top:50%;animation:megapop 2.2s cubic-bezier(.2,1.4,.4,1) forwards;
+  background:linear-gradient(90deg,#ff3b6b,#ffcc00,#22c55e,#3b9cff,#a855f7,#ff3b6b);background-size:200% 100%;-webkit-background-clip:text;background-clip:text}
+.bigtext.soft{background:linear-gradient(180deg,#e0f2fe,#60a5fa);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 5px 0 #1e3a8a) drop-shadow(0 0 10px #fff);font-size:clamp(40px,11vw,96px)}
+.bigtext.small{font-size:clamp(22px,6vw,40px);top:52%;background:none;color:#fff;filter:drop-shadow(0 3px 0 #1e3a8a)}
+@keyframes popin{0%{transform:translate(-50%,-50%) scale(0) rotate(-25deg);opacity:1}18%{transform:translate(-50%,-50%) scale(1.4) rotate(6deg)}30%{transform:translate(-50%,-50%) scale(1) rotate(0)}75%{transform:translate(-50%,-50%) scale(1.05);opacity:1}100%{transform:translate(-50%,-110%) scale(1.15);opacity:0}}
+@keyframes megapop{0%{transform:translate(-50%,-50%) scale(0) rotate(-720deg);opacity:1;background-position:0 0}25%{transform:translate(-50%,-50%) scale(1.5) rotate(10deg)}35%{transform:translate(-50%,-50%) scale(1) rotate(-4deg)}45%{transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}85%{transform:translate(-50%,-50%) scale(1.05);opacity:1;background-position:200% 0}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+.floater{position:absolute;font-weight:900;font-size:34px;color:#ffcc00;filter:drop-shadow(0 3px 0 #b45309) drop-shadow(0 0 6px #fff);animation:floatUp 1.1s ease-out forwards;transform:translate(-50%,-50%)}
+@keyframes floatUp{0%{transform:translate(-50%,-50%) scale(.4)}20%{transform:translate(-50%,-80%) scale(1.3)}100%{transform:translate(-50%,-260%) scale(1);opacity:0}}
+
+/* ===== RESULT ===== */
+.rtitle{font-size:clamp(34px,9vw,56px);font-weight:900;margin:16px 0 0;color:#fff;filter:drop-shadow(0 4px 0 #a855f7)}
+#stars{display:flex;gap:10px;font-size:clamp(60px,18vw,100px);height:1.2em}
+#stars span{color:#d1d5db;filter:drop-shadow(0 4px 0 #0002);transform:scale(.8)}
+#stars span.on{color:#ffcc00;filter:drop-shadow(0 5px 0 #b45309) drop-shadow(0 0 16px #fff59d);animation:starIn .6s cubic-bezier(.2,1.8,.4,1) forwards}
+@keyframes starIn{0%{transform:scale(3) rotate(-180deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+#rScore{font-size:clamp(70px,22vw,140px);font-weight:900;line-height:1;background:linear-gradient(180deg,#fff200,#ff3b6b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 0 #4c1d95)}
+#rMsg{font-size:clamp(22px,6vw,34px);font-weight:900;text-align:center;min-height:1.4em}
+#rMsg.on{animation:popSmall .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popSmall{from{transform:scale(0)}to{transform:none}}
+.rstats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-weight:900;font-size:20px}
+.rstats div{background:#fff;border-radius:16px;padding:8px 16px;box-shadow:0 3px 0 #0001}
+.misses{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px}
+.misses div{background:#fff;border:3px solid #ffb3c7;border-radius:16px;padding:6px 12px;text-align:center}
+.misses b{font-family:"Klee One",serif;font-size:36px;display:block;line-height:1.1}
+.misses small{font-weight:800;color:#64748b}
+
+/* ===== LEVEL UP ===== */
+#lvup{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:#0008;cursor:pointer}
+#lvup.on{display:grid;animation:screenIn .3s}
+#lvup .rays{position:absolute;width:160vmax;height:160vmax;background:repeating-conic-gradient(#ffcc0055 0 10deg,transparent 10deg 20deg);animation:spin 8s linear infinite}
+#lvup .inner{position:relative;text-align:center;animation:megapop2 .8s cubic-bezier(.2,1.6,.4,1)}
+#lvup h2{margin:0;font-size:clamp(50px,14vw,110px);font-weight:900;background:linear-gradient(180deg,#fff200,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 0 #7c2d12) drop-shadow(0 0 20px #fff)}
+#lvup p{margin:0;font-size:clamp(60px,18vw,140px);font-weight:900;color:#fff;filter:drop-shadow(0 6px 0 #a855f7)}
+@keyframes megapop2{0%{transform:scale(0) rotate(-30deg)}100%{transform:none}}
+
+/* ===== ADMIN ===== */
+#admin .card h3,#lock .card h3{margin:0 0 10px;font-size:20px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],textarea{font:inherit;font-size:20px;padding:10px 14px;border-radius:14px;border:3px solid #e5e7eb;outline:none;min-width:0;user-select:text;-webkit-user-select:text}
+input:focus,textarea:focus{border-color:var(--purple)}
+#aKanji{font-family:"Klee One",serif;width:9em;flex:1}
+#aYomi{flex:1;width:9em}
+textarea{width:100%;min-height:110px;font-size:17px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:none}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:#fff;border-radius:16px;padding:8px 12px;border:2px solid #f1f5f9}
+.item .k{font-family:"Klee One",serif;font-size:32px;min-width:1.5em;text-align:center}
+.item .y{font-weight:800}
+.item .m{font-size:13px;color:#64748b;font-weight:800}
+.item .b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.item .b button{font:inherit;font-weight:800;font-size:13px;border:0;border-radius:10px;padding:6px 10px;background:#f1f5f9;cursor:pointer}
+.item .b .del{background:#fee2e2;color:#b91c1c}
+.item .b .wk.on{background:#ffedd5;color:#c2410c}
+.note{font-size:13px;color:#64748b;font-weight:800;margin:6px 0 0}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2a44;color:#fff;font-weight:800;padding:10px 20px;border-radius:999px;z-index:80;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="fever">🔥 FEVER 🔥</div>
+
+<!-- ================= HOME ================= -->
+<section id="home" class="screen on">
+  <div class="corner">
+    <button class="mini" id="soundBtn">🔊</button>
+    <button class="mini" id="adminBtn">⚙ おうちのひと</button>
+  </div>
+  <h1 class="title" id="title"></h1>
+  <div class="card lvcard">
+    <div class="lvbadge"><b><span><small>Lv.</small><span id="hLv">1</span></span></b></div>
+    <div style="flex:1">
+      <div style="font-weight:900;font-size:18px;display:flex;justify-content:space-between"><span>けいけんち</span><span id="hXp">0 / 100</span></div>
+      <div class="xpbar"><i id="hBar"></i></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div>📚 かんじ <span id="hCount">0</span>こ</div>
+    <div>🔥 にがて <span id="hWeak">0</span>こ</div>
+  </div>
+  <div class="opt">もんだいの かず：
+    <button class="chip" data-qn="5">5</button>
+    <button class="chip" data-qn="10">10</button>
+    <button class="chip" data-qn="20">20</button>
+    <button class="chip" data-qn="all">ぜんぶ</button>
+  </div>
+  <button class="btn big" id="startBtn">▶ スタート!</button>
+  <button class="btn big fire" id="weakBtn">🔥 にがて だけ れんしゅう</button>
+</section>
+
+<!-- ================= PLAY ================= -->
+<section id="play" class="screen">
+  <div class="topbar">
+    <button class="mini" id="quitBtn">✕ やめる</button>
+    <div class="pill" id="prog">1 / 10</div>
+    <div class="pill">⭐ <span id="score">0</span></div>
+  </div>
+  <div id="comboBox"></div>
+  <div id="prompt" class="card">
+    <div id="weakBadge" hidden>🔥 にがて かんじ!</div>
+    <div class="ask" id="ask">この よみの かんじを かこう!</div>
+    <div class="qrow">
+      <div id="yomi"></div>
+      <div id="arrow" hidden>➜</div>
+      <div id="answer" hidden><span id="ansK"></span></div>
+    </div>
+  </div>
+  <div id="padwrap"><canvas id="guide"></canvas><canvas id="ink"></canvas><div id="ghost"></div></div>
+  <div class="tools">
+    <button class="mini" id="undoBtn">↩ もどす</button>
+    <button class="mini" id="clearBtn">🧽 ぜんぶけす</button>
+    <button class="mini" id="ghostBtn" hidden>👀 かさねてみる</button>
+  </div>
+  <div class="act" id="actA"><button class="btn big gold" id="revealBtn">こたえを みる!</button></div>
+  <div class="act" id="actB" hidden>
+    <button class="btn big green" id="okBtn">⭕ かけた!</button>
+    <button class="btn big red" id="ngBtn">❌ まちがえた</button>
+  </div>
+</section>
+
+<!-- ================= RESULT ================= -->
+<section id="result" class="screen">
+  <h2 class="rtitle">けっか はっぴょう!</h2>
+  <div id="stars"><span>★</span><span>★</span><span>★</span></div>
+  <div style="display:flex;align-items:baseline;gap:6px"><div id="rScore">0</div><b style="font-size:28px">てん</b></div>
+  <div id="rMsg"></div>
+  <div class="rstats" id="rStats" hidden></div>
+  <div class="card" id="rXp" hidden>
+    <div style="font-weight:900;font-size:18px;display:flex;justify-content:space-between"><span>けいけんち <span id="rGain" style="color:var(--pink)"></span></span><span>Lv.<span id="rLv">1</span></span></div>
+    <div class="xpbar"><i id="rBar"></i></div>
+  </div>
+  <div class="card" id="rMiss" hidden>
+    <div style="font-weight:900">📝 つぎは がんばろう!（にがてに とうろくしたよ）</div>
+    <div class="misses" id="missList"></div>
+  </div>
+  <div class="act" id="rBtns" hidden>
+    <button class="btn blue" id="againBtn">🔁 もういちど</button>
+    <button class="btn fire" id="rWeakBtn">🔥 にがてだけ</button>
+    <button class="btn" id="homeBtn">🏠 ホーム</button>
+  </div>
+</section>
+
+<!-- ================= LOCK ================= -->
+<section id="lock" class="screen">
+  <div class="card" style="margin-top:40px;text-align:center">
+    <h3>🔒 おうちのひと クイズ</h3>
+    <p style="font-weight:800">かんりがめんに はいるには こたえてね</p>
+    <div style="font-size:40px;font-weight:900;margin:10px 0" id="lockQ"></div>
+    <div class="row" style="justify-content:center">
+      <input type="number" inputmode="numeric" id="lockA" style="width:7em;text-align:center">
+      <button class="btn blue" id="lockOk" style="font-size:18px;padding:12px 20px">OK</button>
+    </div>
+    <p style="margin-top:20px"><button class="mini" id="lockBack">← もどる</button></p>
+  </div>
+</section>
+
+<!-- ================= ADMIN ================= -->
+<section id="admin" class="screen">
+  <div class="topbar"><button class="mini" id="adminBack">← ホームへ</button><div class="pill">⚙ かんりがめん</div><span></span></div>
+  <div class="card">
+    <h3>✏️ かんじを ついか</h3>
+    <div class="row">
+      <input type="text" id="aKanji" placeholder="漢字">
+      <input type="text" id="aYomi" placeholder="よみ">
+      <button class="btn green" id="aAdd" style="font-size:18px;padding:12px 20px">ついか</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>📋 まとめて ついか</h3>
+    <textarea id="aBulk" placeholder="1行に1つ「漢字 よみ」と書きます&#10;山 やま&#10;学校 がっこう&#10;花,はな"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn green" id="aBulkAdd" style="font-size:18px;padding:12px 20px">まとめて ついか</button></div>
+    <p class="note">区切りはスペース・カンマ・タブのどれでもOK。同じ漢字＋よみはスキップします。</p>
+  </div>
+  <div class="card">
+    <h3>📚 とうろく いちらん（<span id="aCount">0</span>こ）</h3>
+    <p class="note" style="margin:0 0 8px">🔥 は苦手度。まちがえると増え、正解すると減ります。🔥が2以上の漢字は「にがて」として多めに出題されます。</p>
+    <div class="list" id="aList"></div>
+  </div>
+  <div class="card">
+    <h3>💾 データ</h3>
+    <div class="row">
+      <button class="mini" id="exportBtn">⬇ バックアップを保存</button>
+      <label class="mini" style="display:inline-block">⬆ バックアップを読み込む<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+      <button class="mini" id="resetStats">↺ 成績をリセット</button>
+      <button class="mini" id="deleteAll" style="color:#b91c1c">🗑 ぜんぶ削除</button>
+    </div>
+    <p class="note">データはこのブラウザの中だけに保存されます。ブラウザの履歴やデータを消すと消えるので、ときどきバックアップしてください。</p>
+  </div>
+</section>
+
+<div id="lvup"><div class="rays"></div><div class="inner"><h2>LEVEL UP!!</h2><p>Lv.<span id="lvNum">2</span></p></div></div>
+<canvas id="fx"></canvas>
+<div id="flash"></div>
+<div id="pop"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ================= DATA ================= */
+const KEY = 'kanjiFever.v1';
+const SAMPLE = [['山','やま'],['川','かわ'],['花','はな'],['空','そら'],['雨','あめ'],['森','もり'],['学校','がっこう'],['先生','せんせい']];
+const WEAK_LINE = 2, WEAK_MAX = 6;
+function newItem(k, y) {
+  return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), kanji: k, yomi: y, ok: 0, ng: 0, weak: 0 };
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.items)) return Object.assign({ xp: 0, sound: true, qn: 10 }, d);
+  } catch (e) {}
+  return { items: SAMPLE.map(([k, y]) => newItem(k, y)), xp: 0, sound: true, qn: 10 };
+}
+let S = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const isWeak = it => it.weak >= WEAK_LINE;
+
+function lvInfo(xp) {
+  let lv = 1, need = 100;
+  while (xp >= need) { xp -= need; lv++; need = 100 + (lv - 1) * 50; }
+  return { lv, cur: xp, need };
+}
+
+/* ================= SOUND ================= */
+let AC = null, NOISE = null;
+function ac() {
+  if (!S.sound) return null;
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) { return null; }
+  return AC;
+}
+function tone(f, t, d, type = 'square', v = .12, f2) {
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), s = a.currentTime + t;
+  o.type = type; o.frequency.setValueAtTime(f, s);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, s + d);
+  g.gain.setValueAtTime(.0001, s);
+  g.gain.exponentialRampToValueAtTime(v, s + .01);
+  g.gain.exponentialRampToValueAtTime(.0001, s + d);
+  o.connect(g).connect(a.destination); o.start(s); o.stop(s + d + .05);
+}
+function noise(t, d, v = .2, hp = 1000) {
+  const a = ac(); if (!a) return;
+  if (!NOISE) {
+    NOISE = a.createBuffer(1, a.sampleRate * 1.5, a.sampleRate);
+    const ch = NOISE.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+  }
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), s = a.currentTime + t;
+  src.buffer = NOISE; f.type = 'highpass'; f.frequency.value = hp;
+  g.gain.setValueAtTime(v, s); g.gain.exponentialRampToValueAtTime(.0001, s + d);
+  src.connect(f).connect(g).connect(a.destination); src.start(s); src.stop(s + d + .05);
+}
+const SFX = {
+  click() { tone(900, 0, .06, 'triangle', .08); },
+  correct(c) {
+    const b = 523.25 * Math.pow(2, Math.min(c - 1, 12) / 12);
+    tone(160, 0, .18, 'sine', .45, 45);
+    [0, 4, 7, 12, 16].forEach((s, i) => tone(b * Math.pow(2, s / 12), i * .055, .2, 'square', .08));
+    tone(b * 4, .3, .5, 'triangle', .08);
+    noise(.28, .35, .08, 6000);
+  },
+  wrong() { tone(392, 0, .2, 'triangle', .14, 350); tone(294, .18, .35, 'triangle', .14, 250); },
+  reveal() { tone(250, 0, .28, 'sawtooth', .05, 1400); noise(0, .3, .08, 2500); tone(1046, .26, .25, 'triangle', .1); },
+  fanfare() {
+    [[392, 0, .12], [523, .12, .12], [659, .24, .12], [784, .36, .25], [659, .62, .12], [784, .74, .6]].forEach(([f, t, d]) => {
+      tone(f, t, d, 'square', .08); tone(f / 2, t, d, 'triangle', .1);
+    });
+    noise(.74, .8, .15, 4000);
+  },
+  drum(d) { for (let t = 0; t < d; t += .045) noise(t, .04, .1 + t / d * .25, 600); },
+  crash() { noise(0, 1, .35, 400); tone(120, 0, .4, 'sine', .5, 40); },
+  star(i) { const f = 880 * Math.pow(2, i * 4 / 12); tone(f, 0, .35, 'triangle', .13); tone(f * 2, .06, .35, 'sine', .07); },
+  boom() { noise(0, .6, .22, 200); tone(90, 0, .3, 'sine', .3, 40); },
+  tick() { tone(1500, 0, .03, 'square', .03); },
+  pen() { noise(0, .03, .015, 4000); },
+};
+
+/* ================= FX ================= */
+const FX = { cv: $('#fx'), p: [], run: false, w: 0, h: 0 };
+FX.ctx = FX.cv.getContext('2d');
+function fxResize() {
+  const d = window.devicePixelRatio || 1;
+  FX.w = innerWidth; FX.h = innerHeight;
+  FX.cv.width = FX.w * d; FX.cv.height = FX.h * d;
+  FX.ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+const COLORS = ['#ff3b6b', '#ffcc00', '#22c55e', '#3b9cff', '#a855f7', '#ff8a00', '#00e5ff', '#ffffff', '#ff6ec7'];
+function addP(o) {
+  FX.p.push(Object.assign({ age: 0, rot: rand(0, 6), vr: rand(-.3, .3), drag: .97, g: .25, alpha: 1 }, o));
+  if (!FX.run) { FX.run = true; requestAnimationFrame(fxLoop); }
+}
+function burst(x, y, n = 60, power = 14) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, Math.PI * 2), sp = rand(2, power);
+    addP({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 4, life: rand(50, 100), size: rand(5, 13),
+      color: pick(COLORS), shape: pick(['rect', 'circle', 'star', 'star']) });
+  }
+}
+function firework(x, y, n = 70) {
+  const c = pick(COLORS), c2 = pick(COLORS);
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2, sp = rand(5, 8);
+    addP({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: .07, drag: .955, life: rand(45, 70), size: rand(2.5, 4), color: i % 3 ? c : c2, shape: 'spark' });
+  }
+  for (let i = 0; i < 20; i++) {
+    const a = rand(0, Math.PI * 2), sp = rand(1, 4);
+    addP({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: .05, drag: .96, life: rand(40, 70), size: 2, color: '#fff', shape: 'spark' });
+  }
+}
+function confettiRain(n) {
+  for (let i = 0; i < n; i++) {
+    addP({ x: rand(0, FX.w), y: rand(-FX.h * .6, -10), vx: rand(-1.5, 1.5), vy: rand(2, 5), g: .02, drag: .995,
+      life: 320, size: rand(7, 13), color: pick(COLORS), shape: pick(['rect', 'rect', 'circle', 'star']), wob: rand(0, 6) });
+  }
+}
+function emojiBurst(x, y, list, n = 12) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, Math.PI * 2), sp = rand(4, 11);
+    addP({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 5, life: rand(60, 95), size: rand(26, 44), text: pick(list), shape: 'emoji', vr: rand(-.1, .1) });
+  }
+}
+function starPath(c, r) {
+  c.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const rr = i % 2 ? r * .45 : r, a = i * Math.PI / 5 - Math.PI / 2;
+    c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  c.closePath();
+}
+function fxLoop() {
+  const c = FX.ctx;
+  c.clearRect(0, 0, FX.w, FX.h);
+  for (const p of FX.p) {
+    p.vx *= p.drag; p.vy = p.vy * p.drag + p.g;
+    if (p.wob !== undefined) { p.wob += .08; p.x += Math.sin(p.wob) * .8; }
+    p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.age++;
+    const fade = p.life * .7;
+    p.alpha = p.age > fade ? Math.max(0, 1 - (p.age - fade) / (p.life * .3)) : 1;
+    c.save(); c.globalAlpha = p.alpha; c.translate(p.x, p.y); c.rotate(p.rot);
+    if (p.shape === 'spark') {
+      c.globalCompositeOperation = 'lighter';
+      c.fillStyle = p.color; c.beginPath(); c.arc(0, 0, p.size, 0, 7); c.fill();
+      c.globalAlpha = p.alpha * .35; c.beginPath(); c.arc(0, 0, p.size * 2.6, 0, 7); c.fill();
+    } else if (p.shape === 'emoji') {
+      c.font = `${p.size}px serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(p.text, 0, 0);
+    } else {
+      c.fillStyle = p.color;
+      if (p.shape === 'rect') { c.scale(1, Math.cos(p.age * .15)); c.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); }
+      else if (p.shape === 'circle') { c.beginPath(); c.arc(0, 0, p.size / 2.4, 0, 7); c.fill(); }
+      else { starPath(c, p.size * .7); c.fill(); }
+    }
+    c.restore();
+  }
+  FX.p = FX.p.filter(p => p.age < p.life && p.y < FX.h + 80);
+  if (FX.p.length) requestAnimationFrame(fxLoop); else { FX.run = false; c.clearRect(0, 0, FX.w, FX.h); }
+}
+function bigText(txt, cls = '', dur = 1300) {
+  const d = document.createElement('div');
+  d.className = 'bigtext ' + cls; d.textContent = txt;
+  $('#pop').appendChild(d); setTimeout(() => d.remove(), dur);
+}
+function floater(txt, x, y) {
+  const d = document.createElement('div');
+  d.className = 'floater'; d.textContent = txt; d.style.left = x + 'px'; d.style.top = y + 'px';
+  $('#pop').appendChild(d); setTimeout(() => d.remove(), 1200);
+}
+function flash() { const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
+function shake(strong) {
+  const c = strong ? 'shake2' : 'shake';
+  document.body.classList.remove('shake', 'shake2'); void document.body.offsetWidth;
+  document.body.classList.add(c); setTimeout(() => document.body.classList.remove(c), 650);
+}
+function center(el) { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 1800); }
+
+/* ================= SCREENS ================= */
+function show(id) { $$('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); }
+
+function renderTitle() {
+  const t = 'かんじドリル', cs = [['#ff3b6b', '#9f1239'], ['#ff8a00', '#9a3412'], ['#eab308', '#854d0e'], ['#22c55e', '#166534'], ['#3b9cff', '#1e40af'], ['#a855f7', '#6b21a8']];
+  $('#title').innerHTML = [...t].map((ch, i) => `<span style="--c:${cs[i % 6][0]};--d:${cs[i % 6][1]};animation-delay:${i * .12}s">${ch}</span>`).join('') +
+    '<span class="sub" style="--c:#ff3b6b;--d:#4c1d95">★ フィーバー ★</span>';
+}
+function renderHome() {
+  const L = lvInfo(S.xp);
+  $('#hLv').textContent = L.lv;
+  $('#hXp').textContent = `${L.cur} / ${L.need}`;
+  $('#hBar').style.width = (L.cur / L.need * 100) + '%';
+  $('#hCount').textContent = S.items.length;
+  const w = S.items.filter(isWeak).length;
+  $('#hWeak').textContent = w;
+  $('#weakBtn').disabled = !w;
+  $('#weakBtn').textContent = w ? `🔥 にがて だけ れんしゅう（${w}こ）` : '🔥 にがては ないよ!';
+  $$('.chip').forEach(c => c.classList.toggle('on', c.dataset.qn === String(S.qn)));
+  $('#soundBtn').textContent = S.sound ? '🔊' : '🔇';
+}
+function goHome() { document.body.classList.remove('fever'); renderHome(); show('home'); }
+
+/* ================= PAD ================= */
+const Pad = { n: 1, W: 0, H: 0, strokes: [], cur: null, guide: $('#guide'), ink: $('#ink') };
+function setupPad(n) {
+  Pad.n = Math.max(1, Math.min(4, n));
+  layoutPad();
+}
+function layoutPad() {
+  const n = Pad.n;
+  const avail = Math.min(innerWidth - 40, 640);
+  const hMax = Math.max(170, innerHeight - 500);
+  const box = Math.max(120, Math.min(avail / n, hMax));
+  Pad.W = box * n; Pad.H = box;
+  const wrap = $('#padwrap');
+  wrap.style.width = Pad.W + 'px'; wrap.style.height = Pad.H + 'px';
+  const d = window.devicePixelRatio || 1;
+  for (const cv of [Pad.guide, Pad.ink]) {
+    cv.width = Pad.W * d; cv.height = Pad.H * d;
+    cv.style.width = Pad.W + 'px'; cv.style.height = Pad.H + 'px';
+    cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  }
+  $$('#ghost span').forEach(s => s.style.fontSize = (box * .82) + 'px');
+  drawGuide(); redraw();
+}
+function drawGuide() {
+  const c = Pad.guide.getContext('2d'), b = Pad.H;
+  c.clearRect(0, 0, Pad.W, Pad.H);
+  for (let i = 0; i < Pad.n; i++) {
+    const x = i * b;
+    c.setLineDash([]); c.lineWidth = 3; c.strokeStyle = '#ffb3c7';
+    c.strokeRect(x + 6, 6, b - 12, b - 12);
+    c.setLineDash([8, 8]); c.lineWidth = 2; c.strokeStyle = '#ffd6e0';
+    c.beginPath(); c.moveTo(x + b / 2, 10); c.lineTo(x + b / 2, b - 10); c.moveTo(x + 10, b / 2); c.lineTo(x + b - 10, b / 2); c.stroke();
+  }
+  c.setLineDash([]);
+}
+function lw(p) { return Pad.H * .052 * (.55 + p * .9); }
+function seg(c, a, b) {
+  c.lineWidth = (lw(a.p) + lw(b.p)) / 2;
+  c.beginPath(); c.moveTo(a.x * Pad.W, a.y * Pad.H); c.lineTo(b.x * Pad.W, b.y * Pad.H); c.stroke();
+}
+function dot(c, a) { c.beginPath(); c.arc(a.x * Pad.W, a.y * Pad.H, lw(a.p) / 2, 0, 7); c.fill(); }
+function inkCtx() {
+  const c = Pad.ink.getContext('2d');
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = c.fillStyle = '#1f2a44';
+  return c;
+}
+function redraw() {
+  const c = inkCtx(); c.clearRect(0, 0, Pad.W, Pad.H);
+  for (const s of Pad.strokes) {
+    dot(c, s[0]);
+    for (let i = 1; i < s.length; i++) seg(c, s[i - 1], s[i]);
+  }
+}
+function ptOf(e) {
+  const r = Pad.ink.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, p: e.pointerType === 'pen' && e.pressure ? e.pressure : .5 };
+}
+Pad.ink.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  Pad.ink.setPointerCapture(e.pointerId);
+  Pad.cur = [ptOf(e)]; Pad.strokes.push(Pad.cur);
+  dot(inkCtx(), Pad.cur[0]);
+});
+Pad.ink.addEventListener('pointermove', e => {
+  if (!Pad.cur) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  const c = inkCtx();
+  for (const ev of (evs.length ? evs : [e])) {
+    const p = ptOf(ev), last = Pad.cur[Pad.cur.length - 1];
+    p.p = last.p * .6 + p.p * .4;
+    Pad.cur.push(p); seg(c, last, p);
+  }
+});
+const endStroke = () => { Pad.cur = null; };
+Pad.ink.addEventListener('pointerup', endStroke);
+Pad.ink.addEventListener('pointercancel', endStroke);
+
+/* ================= GAME ================= */
+let P = null;
+function pickSession(n, weakOnly) {
+  const pool = S.items.filter(it => !weakOnly || isWeak(it));
+  const count = n === 'all' ? pool.length : Math.min(n, pool.length);
+  const out = [];
+  while (out.length < count) {
+    const ws = pool.map(it => 1 + it.weak * 2 + (it.ok + it.ng === 0 ? 1 : 0));
+    let r = Math.random() * ws.reduce((a, b) => a + b, 0), i = 0;
+    while (r > ws[i]) { r -= ws[i]; i++; }
+    out.push(pool.splice(i, 1)[0]);
+  }
+  return out;
+}
+function startGame(weakOnly) {
+  ac();
+  if (!S.items.length) { bigText('かんじが ないよ', 'soft', 1500); toast('おうちのひとに かんじを いれてもらおう!'); return; }
+  const q = pickSession(S.qn, weakOnly);
+  if (!q.length) { bigText('にがて ゼロ!!', '', 1400); confettiRain(120); SFX.fanfare(); return; }
+  P = { queue: q, idx: 0, score: 0, combo: 0, maxCombo: 0, ok: 0, ng: 0, reps: {}, missed: [], xpGain: 0, lock: false, weakOnly };
+  document.body.classList.remove('fever');
+  $('#score').textContent = 0; $('#comboBox').textContent = '';
+  show('play');
+  nextQ();
+}
+function nextQ() {
+  if (P.idx >= P.queue.length) return finish();
+  const it = P.queue[P.idx];
+  $('#prog').textContent = `${P.idx + 1} / ${P.queue.length}`;
+  const y = $('#yomi'); y.textContent = it.yomi; y.style.animation = 'none'; void y.offsetWidth; y.style.animation = '';
+  $('#weakBadge').hidden = !isWeak(it);
+  $('#ask').textContent = P.reps[it.id] ? 'もういちど! この よみの かんじを かこう!' : 'この よみの かんじを かこう!';
+  $('#arrow').hidden = $('#answer').hidden = true;
+  $('#actA').hidden = false; $('#actB').hidden = true; $('#ghostBtn').hidden = true;
+  $('#ghost').classList.remove('on');
+  $('#ghost').innerHTML = [...it.kanji].slice(0, 4).map(ch => `<span>${ch}</span>`).join('');
+  Pad.strokes = [];
+  setupPad([...it.kanji].length);
+  P.lock = false;
+}
+function reveal() {
+  if (P.lock) return;
+  const it = P.queue[P.idx];
+  SFX.reveal();
+  $('#ansK').textContent = it.kanji;
+  $('#arrow').hidden = $('#answer').hidden = false;
+  const a = $('#ansK'); a.style.animation = 'none'; void a.offsetWidth; a.style.animation = '';
+  $('#actA').hidden = true; $('#actB').hidden = false; $('#ghostBtn').hidden = false;
+  requestAnimationFrame(() => { const [x, y] = center(a); burst(x, y, 30, 8); });
+}
+const PRAISE = ['いいね!', 'すごい!', 'やったね!', 'せいかい!', 'ナイス!', 'グッド!', 'さすが!'];
+function judge(ok) {
+  if (P.lock) return;
+  P.lock = true;
+  const it = P.queue[P.idx];
+  if (ok) {
+    const wasWeak = isWeak(it);
+    it.ok++; it.weak = Math.max(0, it.weak - 1);
+    const overcome = wasWeak && !isWeak(it);
+    P.combo++; P.ok++; P.maxCombo = Math.max(P.maxCombo, P.combo);
+    const gain = 10 + Math.min(P.combo, 10) * 3 + (wasWeak ? 20 : 0) + (overcome ? 30 : 0);
+    P.score += gain; P.xpGain += gain;
+    celebrate(gain, wasWeak, overcome);
+  } else {
+    it.ng++; it.weak = Math.min(WEAK_MAX, it.weak + 3);
+    P.combo = 0; P.ng++;
+    if (!P.missed.includes(it)) P.missed.push(it);
+    P.reps[it.id] = (P.reps[it.id] || 0) + 1;
+    if (P.reps[it.id] <= 2) P.queue.splice(Math.min(P.idx + 3, P.queue.length), 0, it);
+    boo();
+  }
+  save();
+  updateHud();
+  setTimeout(() => { P.idx++; nextQ(); }, ok ? 1250 : 1500);
+}
+function updateHud() {
+  const s = $('#score'), from = +s.textContent, to = P.score, t0 = performance.now();
+  (function f(t) { const k = Math.min(1, (t - t0) / 500); s.textContent = Math.round(from + (to - from) * k); if (k < 1) requestAnimationFrame(f); })(t0);
+  const cb = $('#comboBox');
+  cb.textContent = P.combo >= 2 ? `${'🔥'.repeat(Math.min(P.combo, 5))} ${P.combo} コンボ!` : '';
+  cb.classList.remove('bump'); void cb.offsetWidth; if (P.combo >= 2) cb.classList.add('bump');
+}
+function celebrate(gain, wasWeak, overcome) {
+  const c = P.combo;
+  SFX.correct(c);
+  navigator.vibrate && navigator.vibrate(40);
+  flash();
+  const [x, y] = center($('#ansK'));
+  burst(x, y, 60 + Math.min(c, 10) * 12, 12 + Math.min(c, 10));
+  const fw = Math.min(1 + Math.floor(c / 2), 6);
+  for (let i = 0; i < fw; i++) setTimeout(() => { firework(rand(FX.w * .15, FX.w * .85), rand(FX.h * .12, FX.h * .5)); SFX.boom(); }, 120 + i * 160);
+  if (c >= 3) emojiBurst(x, y, ['⭐', '✨', '🎉', '💯', '🌟'], 6 + c);
+  shake(c >= 5);
+  let txt = pick(PRAISE);
+  if (c >= 10) txt = 'かんじ マスター!!!';
+  else if (c >= 7) txt = `${c}コンボ!! てんさい!`;
+  else if (c >= 5) txt = 'フィーバー!!!';
+  else if (c >= 3) txt = `${c} コンボ!!`;
+  bigText(txt);
+  floater('+' + gain, x, y - 30);
+  if (c >= 5 && !document.body.classList.contains('fever')) { document.body.classList.add('fever'); setTimeout(SFX.fanfare, 250); }
+  if (c >= 5) confettiRain(40);
+  if (overcome) {
+    setTimeout(() => {
+      bigText('にがて こくふく!!', 'mega', 2200); SFX.fanfare(); shake(true); flash();
+      confettiRain(180); emojiBurst(FX.w / 2, FX.h / 2, ['💪', '🏆', '👑', '🎊', '✨'], 22);
+      for (let i = 0; i < 5; i++) setTimeout(() => firework(rand(FX.w * .1, FX.w * .9), rand(FX.h * .1, FX.h * .45), 90), i * 200);
+    }, 350);
+  } else if (wasWeak) {
+    setTimeout(() => bigText('にがて へってきた!', 'small', 1200), 300);
+  }
+}
+function boo() {
+  SFX.wrong();
+  document.body.classList.remove('fever');
+  const w = $('#padwrap'); w.classList.remove('wobble'); void w.offsetWidth; w.classList.add('wobble');
+  bigText('ドンマイ!', 'soft', 1400);
+  setTimeout(() => bigText('あとで もういちど でるよ', 'small', 1200), 250);
+  const [x, y] = center($('#ansK'));
+  emojiBurst(x, y, ['💧', '💪', '🌱'], 6);
+}
+
+/* ================= RESULT ================= */
+let finishToken = 0;
+async function finish() {
+  const tk = ++finishToken, alive = () => tk === finishToken && $('#result').classList.contains('on');
+  document.body.classList.remove('fever');
+  $('#rScore').textContent = 0; $('#rMsg').textContent = ''; $('#rMsg').classList.remove('on');
+  $$('#stars span').forEach(s => s.classList.remove('on'));
+  ['#rStats', '#rXp', '#rMiss', '#rBtns'].forEach(s => $(s).hidden = true);
+  show('result');
+  const before = lvInfo(S.xp);
+  S.xp += P.xpGain; save();
+  const after = lvInfo(S.xp);
+
+  SFX.drum(1.3); await sleep(1350); if (!alive()) return;
+  SFX.crash(); flash(); shake(true);
+  burst(FX.w / 2, FX.h * .35, 120, 18);
+  await new Promise(res => {
+    const el = $('#rScore'), to = P.score, t0 = performance.now(); let lt = 0;
+    (function f(t) {
+      const k = Math.min(1, (t - t0) / 1100);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      if (t - lt > 60 && k < 1) { SFX.tick(); lt = t; }
+      if (k < 1) requestAnimationFrame(f); else res();
+    })(t0);
+  });
+  if (!alive()) return;
+  const total = P.ok + P.ng, rate = total ? P.ok / total : 0;
+  const stars = rate >= .9 ? 3 : rate >= .7 ? 2 : 1;
+  const sEls = $$('#stars span');
+  for (let i = 0; i < stars; i++) {
+    await sleep(380); if (!alive()) return;
+    sEls[i].classList.add('on'); SFX.star(i);
+    const [x, y] = center(sEls[i]); burst(x, y, 40, 10);
+  }
+  await sleep(400); if (!alive()) return;
+  $('#rMsg').textContent = stars === 3 ? '👑 かんぺき! かんじ はかせ! 👑' : stars === 2 ? '🌟 すごい! その ちょうし! 🌟' : '💪 よく がんばったね! 💪';
+  $('#rMsg').classList.add('on');
+  SFX.fanfare();
+  confettiRain(stars * 90);
+  if (stars === 3) for (let i = 0; i < 8; i++) setTimeout(() => { firework(rand(FX.w * .1, FX.w * .9), rand(FX.h * .1, FX.h * .5), 90); SFX.boom(); }, i * 260);
+  $('#rStats').innerHTML = `<div>⭕ ${P.ok}</div><div>❌ ${P.ng}</div><div>🔥 さいだい ${P.maxCombo} コンボ</div>`;
+  $('#rStats').hidden = false;
+
+  await sleep(600); if (!alive()) return;
+  $('#rXp').hidden = false;
+  $('#rGain').textContent = '+' + P.xpGain;
+  $('#rLv').textContent = before.lv;
+  const bar = $('#rBar');
+  bar.style.transition = 'none'; bar.style.width = (before.cur / before.need * 100) + '%'; void bar.offsetWidth; bar.style.transition = '';
+  if (after.lv > before.lv) {
+    bar.style.width = '100%';
+    await sleep(1100); if (!alive()) return;
+    levelUp(after.lv);
+    $('#rLv').textContent = after.lv;
+    bar.style.transition = 'none'; bar.style.width = '0%'; void bar.offsetWidth; bar.style.transition = '';
+  }
+  bar.style.width = (after.cur / after.need * 100) + '%';
+
+  if (P.missed.length) {
+    $('#missList').innerHTML = '';
+    for (const it of P.missed) {
+      const d = document.createElement('div'), b = document.createElement('b'), s = document.createElement('small');
+      b.textContent = it.kanji; s.textContent = it.yomi; d.append(b, s); $('#missList').appendChild(d);
+    }
+    $('#rMiss').hidden = false;
+  }
+  $('#rWeakBtn').hidden = !S.items.some(isWeak);
+  $('#rBtns').hidden = false;
+}
+function levelUp(lv) {
+  $('#lvNum').textContent = lv;
+  $('#lvup').classList.add('on');
+  SFX.fanfare(); setTimeout(SFX.fanfare, 900);
+  flash(); confettiRain(200);
+  for (let i = 0; i < 10; i++) setTimeout(() => { firework(rand(FX.w * .1, FX.w * .9), rand(FX.h * .1, FX.h * .6), 100); SFX.boom(); }, i * 200);
+  clearTimeout(levelUp.t); levelUp.t = setTimeout(() => $('#lvup').classList.remove('on'), 3200);
+}
+$('#lvup').onclick = () => $('#lvup').classList.remove('on');
+
+/* ================= ADMIN ================= */
+let lockAns = 0;
+function openLock() {
+  const a = Math.floor(rand(12, 20)), b = Math.floor(rand(3, 10));
+  lockAns = a * b; $('#lockQ').textContent = `${a} × ${b} = ?`; $('#lockA').value = '';
+  show('lock'); setTimeout(() => $('#lockA').focus(), 100);
+}
+function tryLock() {
+  if (+$('#lockA').value === lockAns) { renderAdmin(); show('admin'); }
+  else { SFX.wrong(); toast('ちがうよ'); $('#lockA').value = ''; }
+}
+function addItem(k, y) {
+  k = k.trim(); y = y.trim();
+  if (!k || !y) return false;
+  if (S.items.some(it => it.kanji === k && it.yomi === y)) return false;
+  S.items.push(newItem(k, y)); return true;
+}
+function renderAdmin() {
+  $('#aCount').textContent = S.items.length;
+  const list = $('#aList'); list.innerHTML = '';
+  const sorted = S.items.slice().sort((a, b) => b.weak - a.weak || b.ng - a.ng);
+  if (!sorted.length) list.innerHTML = '<p class="note">まだ登録がありません。</p>';
+  for (const it of sorted) {
+    const row = document.createElement('div'); row.className = 'item';
+    const k = document.createElement('div'); k.className = 'k'; k.textContent = it.kanji;
+    const mid = document.createElement('div');
+    const y = document.createElement('div'); y.className = 'y'; y.textContent = it.yomi;
+    const m = document.createElement('div'); m.className = 'm';
+    m.textContent = `⭕${it.ok} ❌${it.ng}　${'🔥'.repeat(Math.ceil(it.weak / 2)) || '—'}`;
+    mid.append(y, m);
+    const b = document.createElement('div'); b.className = 'b';
+    const wk = document.createElement('button'); wk.className = 'wk' + (isWeak(it) ? ' on' : '');
+    wk.textContent = isWeak(it) ? '🔥にがて' : 'にがてにする';
+    wk.onclick = () => { it.weak = isWeak(it) ? 0 : 4; save(); renderAdmin(); };
+    const ed = document.createElement('button'); ed.textContent = 'なおす';
+    ed.onclick = () => {
+      const nk = prompt('漢字', it.kanji); if (nk === null) return;
+      const ny = prompt('よみ', it.yomi); if (ny === null) return;
+      if (nk.trim() && ny.trim()) { it.kanji = nk.trim(); it.yomi = ny.trim(); save(); renderAdmin(); }
+    };
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = 'けす';
+    del.onclick = () => { if (confirm(`「${it.kanji}（${it.yomi}）」を削除しますか？`)) { S.items = S.items.filter(x => x !== it); save(); renderAdmin(); } };
+    b.append(wk, ed, del);
+    row.append(k, mid, b); list.appendChild(row);
+  }
+}
+$('#aAdd').onclick = () => {
+  if (addItem($('#aKanji').value, $('#aYomi').value)) {
+    save(); renderAdmin(); toast(`「${$('#aKanji').value.trim()}」を ついか しました`);
+    $('#aKanji').value = $('#aYomi').value = ''; $('#aKanji').focus();
+  } else toast('漢字とよみを入れてください（重複は追加されません）');
+};
+$('#aKanji').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) $('#aYomi').focus(); };
+$('#aYomi').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) $('#aAdd').click(); };
+$('#aBulkAdd').onclick = () => {
+  let n = 0;
+  for (const line of $('#aBulk').value.split(/\r?\n/)) {
+    const parts = line.trim().split(/[\s,、，\t]+/).filter(Boolean);
+    if (parts.length >= 2 && addItem(parts[0], parts[1])) n++;
+  }
+  save(); renderAdmin(); toast(`${n}こ ついか しました`);
+  if (n) $('#aBulk').value = '';
+};
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kanji-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#importFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    const d = JSON.parse(t);
+    if (!d || !Array.isArray(d.items)) throw 0;
+    if (!confirm(`${d.items.length}こ の漢字を読み込みます。今のデータは上書きされます。よろしいですか？`)) return;
+    S = Object.assign({ xp: 0, sound: true, qn: 10 }, d); save(); renderAdmin(); toast('読み込みました');
+  }).catch(() => toast('読み込めませんでした')).finally(() => { e.target.value = ''; });
+};
+$('#resetStats').onclick = () => {
+  if (!confirm('すべての漢字の成績（⭕❌・苦手度）とレベルをリセットしますか？')) return;
+  S.items.forEach(it => { it.ok = it.ng = it.weak = 0; }); S.xp = 0; save(); renderAdmin(); toast('リセットしました');
+};
+$('#deleteAll').onclick = () => {
+  if (!confirm('登録した漢字をぜんぶ削除しますか？元に戻せません。')) return;
+  S.items = []; save(); renderAdmin(); toast('削除しました');
+};
+
+/* ================= WIRING ================= */
+$$('.chip').forEach(c => c.onclick = () => { SFX.click(); S.qn = c.dataset.qn === 'all' ? 'all' : +c.dataset.qn; save(); renderHome(); });
+$('#startBtn').onclick = () => startGame(false);
+$('#weakBtn').onclick = () => startGame(true);
+$('#soundBtn').onclick = () => { S.sound = !S.sound; save(); renderHome(); SFX.click(); };
+$('#adminBtn').onclick = () => { SFX.click(); openLock(); };
+$('#lockOk').onclick = tryLock;
+$('#lockA').onkeydown = e => { if (e.key === 'Enter') tryLock(); };
+$('#lockBack').onclick = goHome;
+$('#adminBack').onclick = goHome;
+$('#revealBtn').onclick = reveal;
+$('#okBtn').onclick = () => judge(true);
+$('#ngBtn').onclick = () => judge(false);
+$('#undoBtn').onclick = () => { Pad.strokes.pop(); redraw(); SFX.click(); };
+$('#clearBtn').onclick = () => { Pad.strokes = []; redraw(); SFX.pen(); };
+$('#ghostBtn').onclick = () => { $('#ghost').classList.toggle('on'); SFX.click(); };
+$('#quitBtn').onclick = () => {
+  if (!confirm('れんしゅうを やめる？')) return;
+  S.xp += P.xpGain; save(); P = null; goHome();
+};
+$('#againBtn').onclick = () => startGame(P ? P.weakOnly : false);
+$('#rWeakBtn').onclick = () => startGame(true);
+$('#homeBtn').onclick = goHome;
+addEventListener('resize', () => { fxResize(); if ($('#play').classList.contains('on')) layoutPad(); });
+
+fxResize();
+renderTitle();
+renderHome();
+save();
+</script>
+</body>
+</html>

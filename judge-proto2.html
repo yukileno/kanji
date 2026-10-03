@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>正誤判定 試作2</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js"></script>
+<style>
+:root{--pink:#ff3b6b;--green:#22c55e;--orange:#ff8a00;--red:#ef4444;--purple:#a855f7;--ink:#1f2a44}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ffd6e7,#c2e9fb);min-height:100vh;user-select:none;-webkit-user-select:none}
+main{max-width:720px;margin:0 auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+h1{font-size:22px;margin:4px 0}
+.card{background:#fffe;border-radius:22px;box-shadow:0 8px 24px #0002;padding:14px 16px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+input[type=text]{font:inherit;font-size:24px;font-weight:800;width:6em;text-align:center;padding:6px 10px;border-radius:14px;border:3px solid #ffb3c7}
+button{font:inherit;font-weight:900;border:0;border-radius:999px;padding:9px 16px;font-size:16px;background:#fff;color:var(--ink);box-shadow:0 3px 0 #0002;cursor:pointer}
+button:active{transform:translateY(2px);box-shadow:none}
+button.on{background:var(--purple);color:#fff}
+.samples button{font-family:"Klee One",serif;font-size:20px;padding:6px 12px}
+#cells{display:flex;gap:10px;justify-content:center}
+.cell{position:relative;background:#fff;border-radius:20px;box-shadow:0 10px 30px #0003,0 0 0 6px #fff;touch-action:none;transition:box-shadow .2s,opacity .2s}
+.cell.wait{opacity:.55}
+.cell.active{box-shadow:0 10px 30px #0003,0 0 0 6px var(--pink)}
+.cell.done-ok{box-shadow:0 10px 30px #0003,0 0 0 6px var(--green)}
+.cell.done-ng{box-shadow:0 10px 30px #0003,0 0 0 6px var(--orange)}
+.cell svg.grid{position:absolute;inset:0;pointer-events:none}
+.cell .hw{position:relative}
+.cell .tag{position:absolute;top:6px;left:10px;font-size:12px;font-weight:900;color:#ef4444}
+#verdict{font-size:32px;font-weight:900;min-height:42px;text-align:center}
+#verdict.ok{color:var(--green)} #verdict.soso{color:var(--orange)} #verdict.ng{color:var(--red)}
+#status{text-align:center;font-weight:800;min-height:1.5em}
+#msgs{margin:0;padding-left:1.2em;font-weight:800;line-height:1.7}
+.note{font-size:12px;color:#64748b}
+</style>
+</head>
+<body>
+<main>
+  <h1>✍ 正誤判定 試作2（Hanzi Writer版）</h1>
+
+  <div class="card">
+    <div class="row">
+      <input type="text" id="target" value="右">
+      <button id="setBtn">この字にする</button>
+    </div>
+    <div class="row samples" id="samples" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">モード：
+      <button data-mode="test" class="on">📝 テスト（ヒントなし）</button>
+      <button data-mode="practice">✏️ れんしゅう（うすく見える）</button>
+    </div>
+    <div class="row" style="margin-top:8px">きびしさ：
+      <button data-len="1.5">あまめ</button>
+      <button data-len="1" class="on">ふつう</button>
+      <button data-len="0.7">きびしめ</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+  <div id="cells"></div>
+
+  <div class="row">
+    <button id="retryBtn">🔁 もういちど</button>
+    <button id="demoBtn">🎬 おてほん</button>
+  </div>
+
+  <div class="card">
+    <div id="verdict"></div>
+    <ul id="msgs"></ul>
+  </div>
+
+  <p class="note">
+    判定エンジン: <a href="https://github.com/chanind/hanzi-writer" target="_blank">Hanzi Writer</a> (MIT)。
+    日本語の字形・書き順データ: <a href="https://github.com/parsimonhi/animCJK" target="_blank">animCJK</a> (Arphic Public License)。
+    data/ フォルダにない字は中国語データで代用します（書き順が日本とちがうことがあります）。
+  </p>
+</main>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ===== 日本語データの読み込み（学年ごとのファイルを必要なときだけ読む） ===== */
+const HWJA = {
+  data: {}, idx: {}, loading: {},
+  add(d) { Object.assign(this.data, d); },
+  index(m) { for (const [f, cs] of Object.entries(m)) for (const c of cs) this.idx[c] = f; },
+  script(src) {
+    return this.loading[src] ||= new Promise((ok, ng) => {
+      const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ng; document.head.appendChild(s);
+    });
+  },
+  async get(ch) {
+    if (this.data[ch]) return { data: this.data[ch], src: 'ja' };
+    await this.script('data/ja-index.js').catch(() => {});
+    const f = this.idx[ch];
+    if (f) { await this.script(`data/${f}.js`); if (this.data[ch]) return { data: this.data[ch], src: 'ja' }; }
+    // 日本語データにない字は Hanzi Writer 標準（中国語）データで代用
+    const r = await fetch(`https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${encodeURIComponent(ch)}.json`);
+    if (!r.ok) throw new Error('no data');
+    return { data: await r.json(), src: 'zh' };
+  }
+};
+
+/* ===== 状態 ===== */
+let target = '右', mode = 'test', leniency = 1;
+let cells = [];      // { ch, writer, el, src, strokes, mistakes:[], total }
+let active = -1;
+
+const GRID = `<svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none">
+  <rect x="2" y="2" width="96" height="96" rx="5" fill="none" stroke="#ffb3c7" stroke-width="1"/>
+  <line x1="50" y1="4" x2="50" y2="96" stroke="#ffd6e0" stroke-width=".7" stroke-dasharray="3 3"/>
+  <line x1="4" y1="50" x2="96" y2="50" stroke="#ffd6e0" stroke-width=".7" stroke-dasharray="3 3"/></svg>`;
+
+function boxSize(n) { return Math.floor(Math.max(130, Math.min((Math.min(innerWidth - 40, 680) - (n - 1) * 10) / n, 320))); }
+
+async function setTarget(t) {
+  t = [...t.trim()].slice(0, 4).join('');
+  if (!t) return;
+  target = t; $('#target').value = t;
+  const chars = [...t], size = boxSize(chars.length);
+  $('#cells').innerHTML = ''; cells = []; active = -1;
+  showVerdict('', '', []); $('#status').textContent = 'よみこみちゅう…';
+  const loaded = await Promise.all(chars.map(ch => HWJA.get(ch).catch(() => null)));
+  if (target !== t) return;
+  chars.forEach((ch, i) => {
+    const el = document.createElement('div'); el.className = 'cell wait';
+    el.style.width = el.style.height = size + 'px';
+    el.innerHTML = GRID + `<div class="hw" id="hw${i}"></div>` + (loaded[i] && loaded[i].src === 'zh' ? '<span class="tag">⚠中国語データ</span>' : '');
+    $('#cells').appendChild(el);
+    const c = { ch, el, src: loaded[i] && loaded[i].src, strokes: loaded[i] ? loaded[i].data.strokes.length : 0, mistakes: [], total: 0, writer: null };
+    if (loaded[i]) {
+      c.writer = HanziWriter.create(`hw${i}`, ch, {
+        width: size, height: size, padding: size * .08,
+        showCharacter: false, showOutline: mode === 'practice',
+        strokeColor: '#1f2a44', outlineColor: '#ffd6e0', highlightColor: '#ff8a00',
+        drawingColor: '#1f2a44', drawingWidth: Math.max(8, size * .05),
+        strokeAnimationSpeed: 1.2, delayBetweenStrokes: 150,
+        charDataLoader: (_, done) => done(loaded[i].data),
+      });
+    }
+    cells.push(c);
+  });
+  const miss = cells.filter(c => !c.writer).map(c => c.ch);
+  if (miss.length) { $('#status').textContent = `「${miss.join('')}」の データが ありません`; return; }
+  startQuiz();
+}
+
+function startQuiz() {
+  cells.forEach(c => {
+    c.mistakes = []; c.total = 0; c.writer.cancelQuiz();
+    c.writer.hideCharacter({ duration: 0 });
+    mode === 'practice' ? c.writer.showOutline({ duration: 0 }) : c.writer.hideOutline({ duration: 0 });
+    c.el.className = 'cell wait';
+  });
+  showVerdict('', '', []);
+  quizCell(0);
+}
+
+function quizCell(i) {
+  active = i;
+  if (i >= cells.length) { active = -1; return finish(); }
+  const c = cells[i];
+  c.el.className = 'cell active';
+  $('#status').textContent = cells.length > 1 ? `${i + 1}もじめ「？」を かいてね（${c.strokes}かく）` : `かいてね（${c.strokes}かく）`;
+  c.writer.quiz({
+    leniency,
+    // テスト: ヒントなし。3回まちがえたら その画は自動で書かれて先に進む（まちがい扱い）
+    showHintAfterMisses: mode === 'practice' ? 2 : false,
+    markStrokeCorrectAfterMisses: 3,
+    highlightOnComplete: false,
+    onMistake: d => { c.total = d.totalMistakes; c.mistakes[d.strokeNum] = d.mistakesOnStroke; },
+    onCorrectStroke: d => { c.total = d.totalMistakes; },
+    onComplete: d => {
+      c.total = d.totalMistakes;
+      c.el.className = 'cell ' + (c.total ? 'done-ng' : 'done-ok');
+      setTimeout(() => quizCell(i + 1), 300);
+    },
+  });
+}
+
+function finish() {
+  const total = cells.reduce((a, c) => a + c.total, 0);
+  const strokes = cells.reduce((a, c) => a + c.strokes, 0);
+  const forced = cells.reduce((a, c) => a + c.mistakes.filter(m => m >= 3).length, 0);
+  const g = total === 0 ? 'ok' : (forced === 0 && total <= Math.max(1, Math.round(strokes * .2))) ? 'soso' : 'ng';
+  const msgs = [];
+  cells.forEach(c => c.mistakes.forEach((m, j) => {
+    if (!m) return;
+    const who = cells.length > 1 ? `「${c.ch}」の ` : '';
+    msgs.push(m >= 3 ? `${who}${j + 1}かくめ が かけなかったよ（おてほんで かくにん しよう）` : `${who}${j + 1}かくめ で ${m}かい まちがえたよ`);
+  }));
+  showVerdict(g, { ok: '⭕ せいかい!', soso: '🔺 おしい! あと すこし', ng: '❌ もういちど れんしゅう しよう' }[g], msgs);
+  $('#status').textContent = `こたえ：${target}　（まちがい ${total}かい / ${strokes}かく）`;
+  // 答え合わせとして字を表示
+  cells.forEach(c => c.writer.showCharacter({ duration: 400 }));
+}
+
+function showVerdict(cls, text, msgs) {
+  const v = $('#verdict'); v.className = cls; v.textContent = text;
+  $('#msgs').innerHTML = ''; msgs.forEach(m => { const li = document.createElement('li'); li.textContent = m; $('#msgs').appendChild(li); });
+}
+
+async function demo() {
+  cells.forEach(c => c.writer && c.writer.cancelQuiz());
+  for (const c of cells) {
+    if (!c.writer) continue;
+    c.el.className = 'cell active';
+    c.writer.hideCharacter({ duration: 0 });
+    await c.writer.animateCharacter();
+    c.el.className = 'cell';
+  }
+  $('#status').textContent = '「もういちど」で かいてみよう';
+}
+
+/* ===== UI ===== */
+['右', '左', '必', '田', '図', '駅', '飛', '書', '学校', '土', '士'].forEach(k => {
+  const b = document.createElement('button'); b.textContent = k; b.onclick = () => setTarget(k); $('#samples').appendChild(b);
+});
+$('#setBtn').onclick = () => setTarget($('#target').value);
+$('#target').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) setTarget($('#target').value); };
+$('#retryBtn').onclick = () => cells.every(c => c.writer) && startQuiz();
+$('#demoBtn').onclick = demo;
+$$('[data-mode]').forEach(b => b.onclick = () => {
+  mode = b.dataset.mode; $$('[data-mode]').forEach(x => x.classList.toggle('on', x === b)); setTarget(target);
+});
+$$('[data-len]').forEach(b => b.onclick = () => {
+  leniency = +b.dataset.len; $$('[data-len]').forEach(x => x.classList.toggle('on', x === b)); setTarget(target);
+});
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => setTarget(target), 300); });
+
+window.__proto2 = { HWJA, setTarget, get cells() { return cells; } };
+setTarget('右');
+</script>
+</body>
+</html>

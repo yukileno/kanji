@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>正誤判定 試作</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff3b6b;--green:#22c55e;--orange:#ff8a00;--blue:#3b9cff;--red:#ef4444;--ink:#1f2a44}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ffd6e7,#c2e9fb);min-height:100vh;user-select:none;-webkit-user-select:none}
+main{max-width:680px;margin:0 auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+h1{font-size:22px;margin:4px 0}
+.card{background:#fffe;border-radius:22px;box-shadow:0 8px 24px #0002;padding:14px 16px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+input[type=text]{font:inherit;font-size:24px;font-weight:800;width:6em;text-align:center;padding:6px 10px;border-radius:14px;border:3px solid #ffb3c7}
+button{font:inherit;font-weight:900;border:0;border-radius:999px;padding:9px 16px;font-size:16px;background:#fff;color:var(--ink);box-shadow:0 3px 0 #0002;cursor:pointer}
+button:active{transform:translateY(2px);box-shadow:none}
+button.main{background:linear-gradient(180deg,#ff6b95,var(--pink));color:#fff;font-size:22px;padding:12px 30px;box-shadow:0 5px 0 #b3123f}
+button.on{background:#a855f7;color:#fff}
+.samples button{font-family:"Klee One",serif;font-size:20px;padding:6px 12px}
+#padwrap{position:relative;border-radius:20px;background:#fff;box-shadow:0 10px 30px #0003,0 0 0 6px #fff;touch-action:none}
+#padwrap canvas{position:absolute;inset:0;border-radius:20px}
+#ink{touch-action:none;cursor:crosshair}
+#verdict{font-size:34px;font-weight:900;min-height:44px;text-align:center}
+#verdict.ok{color:var(--green)} #verdict.soso{color:var(--orange)} #verdict.ng{color:var(--red)}
+#msgs{margin:0;padding-left:1.2em;font-weight:800;line-height:1.7}
+.legend{font-size:13px;font-weight:800;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
+table{border-collapse:collapse;font-size:13px;width:100%}
+td,th{border-bottom:1px solid #eee;padding:3px 6px;text-align:center}
+.note{font-size:12px;color:#64748b}
+details summary{cursor:pointer;font-weight:800}
+</style>
+</head>
+<body>
+<main>
+  <h1>✍ 正誤判定 試作</h1>
+
+  <div class="card">
+    <div class="row">
+      <input type="text" id="target" value="右">
+      <button id="setBtn">この字にする</button>
+    </div>
+    <div class="row samples" id="samples" style="margin-top:8px"></div>
+  </div>
+
+  <div id="padwrap"><canvas id="guide"></canvas><canvas id="ink"></canvas></div>
+
+  <div class="row">
+    <button id="undoBtn">↩ もどす</button>
+    <button id="clearBtn">🧽 けす</button>
+    <button id="demoBtn">🎬 おてほん</button>
+    <button id="showBtn">👀 かさねる</button>
+  </div>
+  <button class="main" id="judgeBtn">はんてい!</button>
+
+  <div class="card">
+    <div id="verdict"></div>
+    <ul id="msgs"></ul>
+    <div class="legend">
+      <span><i style="background:var(--green)"></i>OK</span>
+      <span><i style="background:var(--orange)"></i>かきじゅん/むき</span>
+      <span><i style="background:var(--red)"></i>かたち ちがう</span>
+      <span><i style="background:#94a3b8"></i>たりない</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">きびしさ：
+      <button data-lv="easy">あまめ</button>
+      <button data-lv="normal" class="on">ふつう</button>
+      <button data-lv="strict">きびしめ</button>
+    </div>
+    <details style="margin-top:10px"><summary>🔧 デバッグ（各画のずれ量）</summary><div id="debug"></div></details>
+  </div>
+
+  <p class="note">書き順データ: <a href="https://kanjivg.tagaini.net/" target="_blank">KanjiVG</a> (CC BY-SA 3.0, Ulrich Apel)。初回はネットから字のデータを取得し、以降はブラウザに保存します。</p>
+</main>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ===== KanjiVG ===== */
+const KVG = 'https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/';
+const N = 32; // 1画あたりのリサンプル点数
+const hexOf = ch => ch.codePointAt(0).toString(16).padStart(5, '0');
+const svgNS = 'http://www.w3.org/2000/svg';
+const measurer = document.createElementNS(svgNS, 'svg');
+measurer.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden';
+document.body.appendChild(measurer);
+
+async function loadKanji(ch) {
+  const hex = hexOf(ch), key = 'kvg.' + hex;
+  let ds = null;
+  try { ds = JSON.parse(localStorage.getItem(key)); } catch (e) {}
+  if (!ds) {
+    const r = await fetch(KVG + hex + '.svg');
+    if (!r.ok) throw new Error('no data');
+    const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+    ds = [...doc.querySelectorAll('path')]
+      .map(p => [p.getAttribute('id') || '', p.getAttribute('d')])
+      .filter(([id]) => /-s\d+$/.test(id))
+      .sort((a, b) => +a[0].match(/-s(\d+)$/)[1] - +b[0].match(/-s(\d+)$/)[1])
+      .map(([, d]) => d);
+    if (!ds.length) throw new Error('no strokes');
+    try { localStorage.setItem(key, JSON.stringify(ds)); } catch (e) {}
+  }
+  // パスを点列に（0..1 座標）
+  return ds.map(d => {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', d); measurer.appendChild(p);
+    const L = p.getTotalLength(), pts = [];
+    for (let i = 0; i < 64; i++) { const q = p.getPointAtLength(L * i / 63); pts.push({ x: q.x / 109, y: q.y / 109 }); }
+    p.remove();
+    return pts;
+  });
+}
+
+/* ===== 幾何 ===== */
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+function resample(pts, n = N) {
+  if (pts.length < 2) return Array(n).fill(0).map(() => ({ ...pts[0] }));
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + dist(pts[i - 1], pts[i]));
+  const L = cum[cum.length - 1];
+  if (L < 1e-6) return Array(n).fill(0).map(() => ({ ...pts[0] }));
+  const out = []; let j = 1;
+  for (let i = 0; i < n; i++) {
+    const t = L * i / (n - 1);
+    while (j < pts.length - 1 && cum[j] < t) j++;
+    const seg = cum[j] - cum[j - 1] || 1, k = (t - cum[j - 1]) / seg;
+    out.push({ x: pts[j - 1].x + (pts[j].x - pts[j - 1].x) * k, y: pts[j - 1].y + (pts[j].y - pts[j - 1].y) * k });
+  }
+  return out;
+}
+function bbox(strokes) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const s of strokes) for (const p of s) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+  return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+}
+// 子どもの字を、お手本の大きさ・位置にそろえる（縦横比のずれは1.5倍まで吸収）
+function normalizeTo(user, tmpl) {
+  const u = bbox(user), t = bbox(tmpl);
+  const big = Math.max(t.w, t.h) / Math.max(u.w, u.h, 1e-3);
+  let sx = u.w > .05 && t.w > .05 ? t.w / u.w : big;
+  let sy = u.h > .05 && t.h > .05 ? t.h / u.h : big;
+  const g = Math.sqrt(sx * sy);
+  sx = Math.min(Math.max(sx, g / 1.5), g * 1.5);
+  sy = Math.min(Math.max(sy, g / 1.5), g * 1.5);
+  return user.map(s => s.map(p => ({ x: t.cx + (p.x - u.cx) * sx, y: t.cy + (p.y - u.cy) * sy })));
+}
+const meanDist = (a, b) => a.reduce((s, p, i) => s + dist(p, b[i]), 0) / a.length;
+
+/* ===== 判定 ===== */
+const LEVELS = { easy: .17, normal: .13, strict: .095 };
+let level = 'normal';
+
+function judgeChar(userRaw, tmplRaw) {
+  const th = LEVELS[level];
+  const T = tmplRaw.map(s => resample(s));
+  const res = { tmplStatus: T.map(() => 'missing'), userStatus: [], msgs: [], debug: [], grade: 'ng', T };
+  if (!userRaw.length) { res.msgs.push('まだ かいてないよ'); return res; }
+  const U = normalizeTo(userRaw, tmplRaw).map(s => resample(s));
+  res.U = U;
+  const cost = (i, j) => meanDist(U[i], T[j]);
+  const costR = (i, j) => meanDist(U[i].slice().reverse(), T[j]);
+
+  // 1) 順番どおりに照合
+  const n = Math.min(U.length, T.length);
+  let inOrder = U.length === T.length;
+  for (let i = 0; i < n; i++) if (cost(i, i) >= th) inOrder = false;
+  if (inOrder) {
+    res.tmplStatus = T.map(() => 'ok'); res.userStatus = U.map(() => 'ok');
+    for (let i = 0; i < n; i++) res.debug.push([i + 1, i + 1, cost(i, i), costR(i, i), 'ok']);
+    res.grade = 'ok'; res.msgs.push('かんぺき!');
+    checkLengths(res, U, T, T.map((_, j) => j));
+    return res;
+  }
+
+  // 2) 書き順を無視して一番近い画どうしを対応づけ（向きが逆も許して探す）
+  const pairs = [];
+  for (let i = 0; i < U.length; i++) for (let j = 0; j < T.length; j++) {
+    const c = cost(i, j), r = costR(i, j);
+    pairs.push({ i, j, c: Math.min(c, r), rev: r < c });
+  }
+  pairs.sort((a, b) => a.c - b.c);
+  const uUsed = new Map(), tUsed = new Map();
+  for (const p of pairs) {
+    if (uUsed.has(p.i) || tUsed.has(p.j)) continue;
+    uUsed.set(p.i, p); tUsed.set(p.j, p);
+  }
+  let bad = 0, order = 0, rev = 0;
+  for (let j = 0; j < T.length; j++) {
+    const p = tUsed.get(j);
+    if (!p) { res.tmplStatus[j] = 'missing'; continue; }
+    let st;
+    if (p.c >= th) { st = 'bad'; bad++; res.msgs.push(`${j + 1}かくめ の かたちが ちがうかも`); }
+    else if (p.rev) { st = 'rev'; rev++; res.msgs.push(`${j + 1}かくめ の むきが はんたいだよ`); }
+    else if (p.i !== j) { st = 'order'; order++; }
+    else st = 'ok';
+    res.tmplStatus[j] = st; res.userStatus[p.i] = st;
+    res.debug.push([p.i + 1, j + 1, cost(p.i, j), costR(p.i, j), st]);
+  }
+  U.forEach((_, i) => { if (!uUsed.has(i)) res.userStatus[i] = 'extra'; });
+  if (U.length !== T.length) res.msgs.unshift(`かくすうが ちがうよ（おてほん ${T.length}かく / きみ ${U.length}かく）`);
+  if (order) {
+    const first = T.findIndex((_, j) => res.tmplStatus[j] === 'order');
+    res.msgs.push(`かきじゅんが ちがうよ（${first + 1}かくめ から）`);
+  }
+  if (U.length === T.length && !bad) res.grade = 'soso';  // かたちは合ってる
+  checkLengths(res, U, T, T.map((_, j) => tUsed.get(j) ? tUsed.get(j).i : -1));
+  return res;
+}
+
+// 土/士・未/末 のように「同じ向きの画の長さ関係」で区別する字のチェック
+const strokeLen = s => s.reduce((a, p, i) => i ? a + dist(s[i - 1], p) : 0, 0);
+const strokeAng = s => Math.atan2(s[s.length - 1].y - s[0].y, s[s.length - 1].x - s[0].x);
+// 画の向きに沿って射影したときの重なり率（短い方の長さに対する割合）
+function overlap(s, t) {
+  const g = strokeAng(s), ux = Math.cos(g), uy = Math.sin(g);
+  const pr = st => { const v = st.map(p => p.x * ux + p.y * uy); return [Math.min(...v), Math.max(...v)]; };
+  const [a0, a1] = pr(s), [b0, b1] = pr(t);
+  return Math.max(0, Math.min(a1, b1) - Math.max(a0, b0)) / Math.max(Math.min(a1 - a0, b1 - b0), 1e-3);
+}
+function checkLengths(res, U, T, map) {
+  for (let a = 0; a < T.length; a++) for (let b = 0; b < T.length; b++) {
+    const ua = map[a], ub = map[b];
+    if (a === b || ua < 0 || ub < 0) continue;
+    let da = Math.abs(strokeAng(T[a]) - strokeAng(T[b])); da = Math.min(da, 2 * Math.PI - da);
+    if (da > .35) continue;                                  // 向きがちがう画どうしは比べない
+    if (overlap(T[a], T[b]) < .6) continue;                  // 並んで重なっている画どうしだけ（土の横棒2本など）
+    const tr = strokeLen(T[a]) / strokeLen(T[b]);
+    if (tr < 1.25) continue;                                 // お手本で a がはっきり長いときだけ
+    if (strokeLen(U[ua]) / Math.max(strokeLen(U[ub]), 1e-3) < 1.0) {
+      res.msgs.push(`${a + 1}かくめ を ${b + 1}かくめ より ながく かこう`);
+      res.grade = 'ng';
+      for (const j of [a, b]) if (res.tmplStatus[j] === 'ok') res.tmplStatus[j] = 'bad';
+      res.msgs = res.msgs.filter(m => m !== 'かんぺき!');
+    }
+  }
+}
+
+/* ===== パッド ===== */
+const Pad = { n: 1, W: 0, H: 0, strokes: [], cur: null, guide: $('#guide'), ink: $('#ink') };
+let target = '右', templates = [], lastResult = null, overlay = false;
+
+function layoutPad() {
+  const box = Math.max(140, Math.min((Math.min(innerWidth - 40, 640)) / Pad.n, 360));
+  Pad.W = box * Pad.n; Pad.H = box;
+  const wrap = $('#padwrap'); wrap.style.width = Pad.W + 'px'; wrap.style.height = Pad.H + 'px';
+  const d = devicePixelRatio || 1;
+  for (const cv of [Pad.guide, Pad.ink]) {
+    cv.width = Pad.W * d; cv.height = Pad.H * d; cv.style.width = Pad.W + 'px'; cv.style.height = Pad.H + 'px';
+    cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  }
+  drawGuide(); redraw();
+}
+const STC = { ok: '#22c55e', order: '#ff8a00', rev: '#ff8a00', bad: '#ef4444', missing: '#94a3b8', extra: '#ef4444' };
+function drawGuide() {
+  const c = Pad.guide.getContext('2d'), b = Pad.H;
+  c.clearRect(0, 0, Pad.W, Pad.H);
+  for (let i = 0; i < Pad.n; i++) {
+    const x = i * b;
+    c.setLineDash([]); c.lineWidth = 3; c.strokeStyle = '#ffb3c7'; c.strokeRect(x + 6, 6, b - 12, b - 12);
+    c.setLineDash([8, 8]); c.lineWidth = 2; c.strokeStyle = '#ffd6e0';
+    c.beginPath(); c.moveTo(x + b / 2, 10); c.lineTo(x + b / 2, b - 10); c.moveTo(x + 10, b / 2); c.lineTo(x + b - 10, b / 2); c.stroke();
+  }
+  c.setLineDash([]);
+  // お手本の重ね表示（判定後は色つき）
+  if (overlay || lastResult) {
+    templates.forEach((tm, ci) => {
+      if (!tm) return;
+      const r = lastResult && lastResult[ci];
+      tm.forEach((s, j) => {
+        c.strokeStyle = r ? STC[r.tmplStatus[j]] + 'cc' : '#ff3b6b55';
+        c.lineWidth = b * .025; c.lineCap = 'round'; c.lineJoin = 'round';
+        c.beginPath(); s.forEach((p, k) => { const X = (ci + p.x) * b, Y = p.y * b; k ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.stroke();
+        c.fillStyle = c.strokeStyle; c.font = `900 ${b * .06}px sans-serif`;
+        c.fillText(j + 1, (ci + s[0].x) * b - b * .05, s[0].y * b - b * .015);
+      });
+    });
+  }
+}
+const lw = () => Pad.H * .045;
+function redraw() {
+  const c = Pad.ink.getContext('2d');
+  c.clearRect(0, 0, Pad.W, Pad.H);
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.lineWidth = lw();
+  c.strokeStyle = c.fillStyle = lastResult ? '#1f2a4499' : '#1f2a44';
+  for (const s of Pad.strokes) {
+    c.beginPath(); c.arc(s[0].x * Pad.W, s[0].y * Pad.H, lw() / 2, 0, 7); c.fill();
+    c.beginPath(); s.forEach((p, k) => k ? c.lineTo(p.x * Pad.W, p.y * Pad.H) : c.moveTo(p.x * Pad.W, p.y * Pad.H)); c.stroke();
+  }
+}
+const ptOf = e => { const r = Pad.ink.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; };
+Pad.ink.addEventListener('pointerdown', e => {
+  e.preventDefault(); Pad.ink.setPointerCapture(e.pointerId);
+  if (lastResult) { lastResult = null; drawGuide(); }
+  Pad.cur = [ptOf(e)]; Pad.strokes.push(Pad.cur); redraw();
+});
+Pad.ink.addEventListener('pointermove', e => {
+  if (!Pad.cur) return;
+  for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])) Pad.cur.push(ptOf(ev));
+  redraw();
+});
+const endStroke = () => { Pad.cur = null; };
+Pad.ink.addEventListener('pointerup', endStroke);
+Pad.ink.addEventListener('pointercancel', endStroke);
+
+/* ===== 判定の実行 ===== */
+// 画の重心でどのマスの字かを決め、マス内座標(0..1)に変換
+function splitByCell() {
+  const cells = Array.from({ length: Pad.n }, () => []);
+  for (const s of Pad.strokes) {
+    const cx = s.reduce((a, p) => a + p.x, 0) / s.length;
+    const ci = Math.min(Pad.n - 1, Math.max(0, Math.floor(cx * Pad.n)));
+    cells[ci].push(s.map(p => ({ x: p.x * Pad.n - ci, y: p.y })));
+  }
+  return cells;
+}
+function runJudge() {
+  if (templates.some(t => !t)) { showVerdict('ng', 'データが よみこめていません', []); return; }
+  const cells = splitByCell();
+  lastResult = templates.map((t, i) => judgeChar(cells[i], t));
+  const grades = lastResult.map(r => r.grade);
+  const g = grades.includes('ng') ? 'ng' : grades.includes('soso') ? 'soso' : 'ok';
+  const msgs = lastResult.flatMap((r, i) => r.grade === 'ok' ? [] : r.msgs.map(m => (Pad.n > 1 ? `「${[...target][i]}」` : '') + m));
+  showVerdict(g, { ok: '⭕ せいかい!', soso: '🔺 おしい! かたちは あってるよ', ng: '❌ もういちど!' }[g], msgs);
+  // デバッグ表
+  $('#debug').innerHTML = lastResult.map((r, ci) =>
+    `<p style="margin:6px 0 2px;font-weight:900">「${[...target][ci]}」 しきい値 ${LEVELS[level]}</p><table><tr><th>きみの画</th><th>おてほん</th><th>ずれ</th><th>逆向き</th><th>判定</th></tr>` +
+    r.debug.map(d => `<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2].toFixed(3)}</td><td>${d[3].toFixed(3)}</td><td>${d[4]}</td></tr>`).join('') + '</table>').join('');
+  drawGuide(); redraw();
+}
+function showVerdict(cls, text, msgs) {
+  const v = $('#verdict'); v.className = cls; v.textContent = text;
+  $('#msgs').innerHTML = ''; msgs.forEach(m => { const li = document.createElement('li'); li.textContent = m; $('#msgs').appendChild(li); });
+}
+
+/* ===== おてほんアニメ ===== */
+let demoTimer = 0;
+function demo() {
+  cancelAnimationFrame(demoTimer);
+  const c = Pad.guide.getContext('2d'), b = Pad.H;
+  const all = templates.flatMap((t, ci) => (t || []).map(s => ({ s, ci })));
+  let k = 0, t0 = performance.now();
+  lastResult = null; overlay = false; drawGuide();
+  (function step(now) {
+    if (k >= all.length) { drawGuide(); return; }
+    const { s, ci } = all[k], f = Math.min(1, (now - t0) / 500), m = Math.max(2, Math.ceil(s.length * f));
+    c.strokeStyle = '#3b9cff'; c.lineWidth = b * .045; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath(); s.slice(0, m).forEach((p, i) => { const X = (ci + p.x) * b, Y = p.y * b; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.stroke();
+    if (f >= 1) { k++; t0 = now + 150; }
+    demoTimer = requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ===== 文字セット ===== */
+async function setTarget(t) {
+  t = [...t.trim()].slice(0, 4).join('');
+  if (!t) return;
+  target = t; $('#target').value = t;
+  Pad.n = [...t].length; Pad.strokes = []; lastResult = null; overlay = false;
+  templates = [...t].map(() => null);
+  layoutPad();
+  showVerdict('', 'よみこみちゅう…', []);
+  const loaded = await Promise.all([...t].map(ch => loadKanji(ch).catch(() => null)));
+  if (target !== t) return;
+  templates = loaded;
+  const miss = [...t].filter((_, i) => !loaded[i]);
+  showVerdict(miss.length ? 'ng' : '', miss.length ? `「${miss.join('')}」の データが ありません` : `「${t}」を かいてね（${loaded.map(x => x.length + 'かく').join(' / ')}）`, []);
+  drawGuide();
+}
+
+['右', '左', '山', '川', '花', '学', '校', '土', '書', '学校'].forEach(k => {
+  const b = document.createElement('button'); b.textContent = k; b.onclick = () => setTarget(k); $('#samples').appendChild(b);
+});
+$('#setBtn').onclick = () => setTarget($('#target').value);
+$('#target').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) setTarget($('#target').value); };
+$('#undoBtn').onclick = () => { Pad.strokes.pop(); lastResult = null; drawGuide(); redraw(); };
+$('#clearBtn').onclick = () => { Pad.strokes = []; lastResult = null; drawGuide(); redraw(); showVerdict('', '', []); };
+$('#showBtn').onclick = () => { overlay = !overlay; drawGuide(); };
+$('#demoBtn').onclick = demo;
+$('#judgeBtn').onclick = runJudge;
+$$('[data-lv]').forEach(b => b.onclick = () => {
+  level = b.dataset.lv; $$('[data-lv]').forEach(x => x.classList.toggle('on', x === b));
+  if (lastResult) runJudge();
+});
+addEventListener('resize', layoutPad);
+
+// テスト用フック（コンソールから自動入力で判定を試せる）
+window.__proto = { Pad, judgeChar, loadKanji, setTarget, runJudge, get templates() { return templates; }, get result() { return lastResult; } };
+setTarget('右');
+</script>
+</body>
+</html>
