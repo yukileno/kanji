@@ -38,6 +38,13 @@ button.retry{background:linear-gradient(180deg,#fdba74,var(--orange));color:#fff
 .unit.all{grid-column:1/-1;background:linear-gradient(135deg,#fff7ed,#fdf2f8);box-shadow:0 6px 18px #0001,0 0 0 3px #fbcfe8}
 .unit.all .cnt{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .unit.all .cnt button{font-size:16px;padding:8px 18px}
+.unit{cursor:pointer;transition:transform .15s,box-shadow .15s}
+.unit.sel{box-shadow:0 6px 18px #0002,0 0 0 4px var(--pink);transform:translateY(-2px)}
+.unit.sel b::before{content:"✔ ";color:var(--pink)}
+#home{padding-bottom:120px}
+#startBar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:12px 16px 18px;background:linear-gradient(transparent,#fff9 40%);z-index:4}
+#startBtn{font-size:30px;padding:14px 60px;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+#startBtn small{font-size:15px;font-weight:800;opacity:.95}
 #rules{font-size:15px;font-weight:800;line-height:1.8;margin:0;padding-left:1.2em}
 #totals{font-weight:900;font-size:18px}
 
@@ -140,6 +147,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
   </div>
   <div id="units"></div>
   <p class="note" id="srcNote"></p>
+  <div id="startBar"><button class="main" id="startBtn">▶ スタート!<small id="startSel"></small></button></div>
 </section>
 
 <!-- ===== 問題（チャレンジ・じっくり共通） ===== -->
@@ -237,7 +245,7 @@ const RULE = {
 /* ===== 保存 ===== */
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
 const store = Object.assign({ units: {}, best: {} }, load());
-store.opt = Object.assign({ mode: 'challenge', read: 0, shuffle: 0, sound: 1 }, store.opt);
+store.opt = Object.assign({ mode: 'challenge', read: 0, shuffle: 0, sound: 1, sel: 'all', count: 10 }, store.opt);
 function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
 
 /* ===== 効果音（WebAudio。🔊ボタンで消せる） ===== */
@@ -279,21 +287,32 @@ function renderHome() {
   $('#rules').innerHTML = ch
     ? `<li>3分間で何点とれるか! 手本なしで書こう</li><li>正解で 1字100点。一致率 80%以上で ×2、90%以上で ×3</li><li>90%以上で 🔥FEVER（20秒）。FEVER中にまた90%以上で 倍率アップ!（最大×${RULE.feverMax}）</li><li>まちがえると FEVER終了。見なおしの間は タイマーが止まるよ</li>`
     : `<li>時間制限なし。1問ずつ じっくり書こう</li><li>まちがえたら お手本を見て 書きなおし</li>`;
+  // 単元カード: 押すと「選択」→ 下の スタート! で始める
   const box = $('#units'); box.innerHTML = '';
   const all = allUnit(), an = poolOf(all).length;
-  const ab = document.createElement(ch ? 'button' : 'div'); ab.className = 'unit all';
-  ab.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${an}問からランダムに出題</span>` + recLine('all') +
-    (ch ? '' : `<div class="cnt"><button data-n="10">10問</button><button data-n="20">20問</button><button data-n="0">ぜんぶ（${an}問）</button></div>`);
-  if (ch) ab.onclick = () => startChallenge(all);
-  else ab.querySelectorAll('[data-n]').forEach(b => b.onclick = () => startStudy(all, null, +b.dataset.n));
-  box.appendChild(ab);
-  for (const u of TESTS.units) {
-    const w = u.items.filter(i => i.kind === 'write').length, r = u.items.length - w;
-    const b = document.createElement('button'); b.className = 'unit';
-    b.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` + recLine(u.id);
-    b.onclick = () => ch ? startChallenge(u) : startStudy(u);
-    box.appendChild(b);
+  const cards = [{ u: all, all: true }, ...TESTS.units.map(u => ({ u }))];
+  if (!cards.some(c => c.u.id === store.opt.sel)) store.opt.sel = 'all';
+  for (const { u, all: isAll } of cards) {
+    const el = document.createElement('div');
+    el.className = 'unit' + (isAll ? ' all' : '') + (u.id === store.opt.sel ? ' sel' : '');
+    el.setAttribute('role', 'button');
+    if (isAll) {
+      el.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${an}問からランダムに出題</span>` + recLine('all') +
+        (ch ? '' : `<div class="cnt">${[10, 20, 0].map(n => `<button data-n="${n}" class="${store.opt.count === n ? 'on' : ''}">${n ? n + '問' : `ぜんぶ（${an}問）`}</button>`).join('')}</div>`);
+      el.querySelectorAll('[data-n]').forEach(b => b.onclick = e => { e.stopPropagation(); store.opt.count = +b.dataset.n; store.opt.sel = 'all'; save(); renderHome(); });
+    } else {
+      const w = u.items.filter(i => i.kind === 'write').length, r = u.items.length - w;
+      el.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` + recLine(u.id);
+    }
+    el.onclick = () => { store.opt.sel = u.id; save(); renderHome(); };
+    box.appendChild(el);
   }
+  const selU = cards.find(c => c.u.id === store.opt.sel).u;
+  $('#startSel').textContent = selU.name;
+  $('#startBtn').onclick = () => {
+    if (ch) startChallenge(selU);
+    else selU.id === 'all' ? startStudy(selU, null, store.opt.count) : startStudy(selU);
+  };
   const t = ScoreGame.totals();
   $('#totals').textContent = `🥇${t.gold}　🥈${t.silver}　🥉${t.bronze}`;
   $('#srcNote').textContent = `出題データ: ${TESTS.source}`;
