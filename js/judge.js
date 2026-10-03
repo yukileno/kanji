@@ -146,7 +146,9 @@
 
   function withMsgs(res) {
     let shapes = 0;
+    const countWrong = res.reasons.some(r => r.type === 'count');
     res.msgs = res.reasons.flatMap(r => {
+      if (countWrong && r.type !== 'count') return [];   // 画数がちがうときは、それだけ伝える
       switch (r.type) {
         case 'empty': return ['まだ書いていないよ'];
         case 'count': return [`画数がちがうよ（正しくは ${r.expected}画、書いたのは ${r.got}画）`];

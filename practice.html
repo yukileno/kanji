@@ -3,18 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>漢字テスト れんしゅう</title>
+<title>漢字チャレンジ</title>
 <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--pink:#ff3b6b;--green:#16a34a;--orange:#ea580c;--red:#dc2626;--purple:#7c3aed;--blue:#2563eb;--ink:#1f2a44;--muted:#64748b}
+:root{--pink:#ff3b6b;--green:#16a34a;--orange:#ea580c;--red:#dc2626;--purple:#7c3aed;--blue:#2563eb;--ink:#1f2a44;--muted:#64748b;--gold:#f59e0b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,#fde2ec,#dbeafe);min-height:100vh;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+body{font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);min-height:100vh;background:#fde2ec;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow-x:hidden}
+#bg{position:fixed;inset:-20%;z-index:-1;background:linear-gradient(120deg,#fde2ec,#dbeafe,#fef3c7,#dcfce7,#fde2ec);background-size:400% 400%;animation:bgmove 20s ease infinite}
+body.fever #bg{background:linear-gradient(120deg,#ff9a9e,#fecfef,#fbc2eb,#a1c4fd,#fde68a,#ff9a9e);background-size:400% 400%;animation:bgmove 2.5s ease infinite,hue 1.5s linear infinite}
+@keyframes bgmove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes hue{to{filter:hue-rotate(360deg) saturate(1.4)}}
 .screen{display:none;max-width:1100px;margin:0 auto;padding:16px;flex-direction:column;align-items:center;gap:12px}
 .screen.on{display:flex}
-h1{font-size:28px;margin:10px 0 0}
+h1{font-size:30px;margin:10px 0 0}
 .card{background:#fffffff2;border-radius:20px;box-shadow:0 6px 20px #0001;padding:14px 18px;width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
 button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:10px 18px;font-size:17px;background:#fff;color:var(--ink);box-shadow:0 2px 0 #0002,0 0 0 1px #0001;cursor:pointer}
@@ -23,31 +27,35 @@ button.on{background:var(--purple);color:#fff}
 button.main{background:linear-gradient(180deg,#ff6b95,var(--pink));color:#fff;font-size:24px;padding:12px 44px;box-shadow:0 4px 0 #b3123f}
 button.go{background:linear-gradient(180deg,#60a5fa,var(--blue));color:#fff;font-size:20px;padding:12px 30px;box-shadow:0 4px 0 #1e3a8a}
 button.retry{background:linear-gradient(180deg,#fdba74,var(--orange));color:#fff;font-size:20px;padding:12px 26px;box-shadow:0 4px 0 #9a3412}
+.corner{position:fixed;top:10px;right:10px;z-index:5}
 
-/* 単元えらび */
+/* ===== ホーム ===== */
 #units{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;width:100%}
 .unit{text-align:left;border-radius:20px;padding:16px 18px;background:#fff;box-shadow:0 6px 18px #0001;display:flex;flex-direction:column;gap:6px;font-size:16px}
 .unit b{font-size:20px}
 .unit .meta{color:var(--muted);font-size:14px}
-.unit .rec{font-size:14px;color:var(--green)}
+.unit .rec{font-size:14px;color:var(--green);font-weight:900}
 .unit.all{grid-column:1/-1;background:linear-gradient(135deg,#fff7ed,#fdf2f8);box-shadow:0 6px 18px #0001,0 0 0 3px #fbcfe8}
 .unit.all .cnt{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .unit.all .cnt button{font-size:16px;padding:8px 18px}
-#qUnit{font-size:13px;font-weight:800;color:var(--muted)}
+#rules{font-size:15px;font-weight:800;line-height:1.8;margin:0;padding-left:1.2em}
 #totals{font-weight:900;font-size:18px}
 
-/* 問題 */
+/* ===== 問題（共通） ===== */
 .topbar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.pill{background:#fff;border-radius:999px;padding:6px 16px;font-weight:900;font-size:18px;box-shadow:0 2px 0 #0002}
+.pill{background:#fff;border-radius:999px;padding:6px 16px;font-weight:900;font-size:18px;box-shadow:0 2px 0 #0002;white-space:nowrap}
+#qHead{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
 #qKind{font-size:14px;font-weight:900;color:#fff;background:var(--blue);border-radius:999px;padding:2px 12px}
 #qKind.read{background:#0d9488}
+#qUnit{font-size:13px;font-weight:800;color:var(--muted)}
 #qYomi{font-size:clamp(34px,6vw,54px);font-weight:900;letter-spacing:.06em;line-height:1.2;text-align:center}
 #qNote{font-size:18px;font-weight:800;color:var(--muted);min-height:1.4em;text-align:center}
 #qNote mark{background:#fef08a;color:var(--ink);border-radius:4px;padding:0 3px}
-#padArea{width:100%;display:flex;justify-content:center}
+#padArea{width:100%;display:flex;justify-content:center;position:relative}
 .wpad{position:relative;background:#fff;border-radius:16px;box-shadow:0 8px 24px #0002,0 0 0 5px #fff}
 .wpad canvas{position:absolute;inset:0;border-radius:16px}
 .wpad canvas:last-child{touch-action:none;cursor:crosshair}
+body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0 0 30px #f59e0b}
 #verdict{font-size:32px;font-weight:900;text-align:center}
 #verdict.ok{color:var(--green)} #verdict.ng{color:var(--red)}
 #msgs{margin:4px 0 0;padding-left:1.2em;font-weight:800;line-height:1.8;font-size:17px}
@@ -61,54 +69,99 @@ button.retry{background:linear-gradient(180deg,#fdba74,var(--orange));color:#fff
 #medalNote.best{color:var(--pink);animation:pop .6s}
 @keyframes pop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
 
-/* 結果 */
-#sumScore{font-size:64px;font-weight:900;line-height:1}
-#sumScore small{font-size:24px}
+/* ===== 3分チャレンジ ===== */
+#hud{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+#timer{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;background:#fff;border-radius:999px;padding:4px 18px;box-shadow:0 2px 0 #0002;min-width:120px;text-align:center}
+#timer.low{color:var(--red);animation:blink 1s steps(2) infinite}
+#timer.paused{color:var(--muted)}
+@keyframes blink{50%{opacity:.4}}
+#score{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;background:#fff;border-radius:999px;padding:2px 20px;box-shadow:0 2px 0 #0002}
+#score.bump{animation:bump .4s}
+@keyframes bump{40%{transform:scale(1.25)}}
+#feverBox{width:100%;height:46px;display:flex;align-items:center;gap:10px}
+#feverBadge{font-size:26px;font-weight:900;color:#fff;background:linear-gradient(90deg,#f43f5e,#f59e0b);border-radius:999px;padding:2px 18px;white-space:nowrap;
+  text-shadow:0 2px 0 #0003;box-shadow:0 0 16px #f59e0b;animation:feverPulse .6s ease-in-out infinite alternate}
+@keyframes feverPulse{to{transform:scale(1.08)}}
+#feverBar{flex:1;height:14px;border-radius:999px;background:#fff8;overflow:hidden}
+#feverBar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#f43f5e,#f59e0b,#fde047);border-radius:999px}
+#feverHint{flex:1;text-align:center;font-weight:800;color:var(--muted);font-size:15px}
+#pop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:3}
+#pop .pts{font-size:72px;font-weight:900;color:#fff;-webkit-text-stroke:3px var(--pink);text-shadow:0 6px 0 #b3123f88;animation:popUp 1.1s ease-out forwards}
+#pop .sub{font-size:24px;font-weight:900;color:var(--ink);background:#fffe;border-radius:999px;padding:2px 14px;display:inline-block;animation:popUp 1.1s ease-out forwards}
+@keyframes popUp{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.15);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:translateY(-40px);opacity:0}}
+#bigText{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:20}
+#bigText span{font-size:clamp(56px,12vw,120px);font-weight:900;color:#fff;-webkit-text-stroke:4px #f43f5e;text-shadow:0 8px 0 #9f1239aa;animation:bigIn 1.3s ease-out forwards}
+@keyframes bigIn{0%{transform:scale(.2) rotate(-10deg);opacity:0}25%{transform:scale(1.1) rotate(3deg);opacity:1}75%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}
+#reviewCard{border:3px solid #fecaca}
+#reviewCard .paused{font-size:14px;font-weight:900;color:var(--muted);text-align:center}
+
+/* ===== 結果 ===== */
+#sumScore{font-size:72px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+#sumScore small{font-size:26px}
+#sumBest{font-weight:900;font-size:20px;min-height:1.4em}
+#sumBest.new{color:var(--pink);animation:pop .7s}
+#sumStats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#sumStats div{background:#fff;border-radius:16px;padding:8px 16px;font-weight:900;box-shadow:0 2px 6px #0001}
 #sumList{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;width:100%}
 .si{background:#fff;border-radius:14px;padding:8px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 2px 6px #0001}
 .si .w{font-family:"Klee One",serif;font-size:24px}
 .si .y{font-size:13px;color:var(--muted)}
-.si .r{margin-left:auto;font-size:22px}
+.si .r{margin-left:auto;font-size:18px;font-weight:900;text-align:right}
 .note{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div id="bg"></div>
+<div class="corner"><button id="soundBtn">🔊</button></div>
 
-<!-- ===== 単元えらび ===== -->
+<!-- ===== ホーム ===== -->
 <section id="home" class="screen on">
-  <h1>✍ 漢字テスト れんしゅう</h1>
+  <h1>✍ 漢字チャレンジ</h1>
   <div id="totals"></div>
   <div class="card">
-    <div class="row">問題：
-      <button data-opt="read" data-val="0" class="on">「書く」問題だけ</button>
+    <div class="row">モード：
+      <button data-opt="mode" data-val="challenge">⏱ 3分チャレンジ</button>
+      <button data-opt="mode" data-val="study">📝 じっくり練習</button>
+    </div>
+    <div class="row" style="margin-top:8px">問題：
+      <button data-opt="read" data-val="0">「書く」問題だけ</button>
       <button data-opt="read" data-val="1">「読む」問題も書く</button>
     </div>
-    <div class="row" style="margin-top:8px">順番：
-      <button data-opt="shuffle" data-val="0" class="on">番号順</button>
+    <div class="row" style="margin-top:8px" id="orderRow">順番：
+      <button data-opt="shuffle" data-val="0">番号順</button>
       <button data-opt="shuffle" data-val="1">バラバラ</button>
     </div>
+    <ul id="rules" style="margin-top:10px"></ul>
   </div>
   <div id="units"></div>
   <p class="note" id="srcNote"></p>
 </section>
 
-<!-- ===== 問題 ===== -->
+<!-- ===== 問題（チャレンジ・じっくり共通） ===== -->
 <section id="play" class="screen">
-  <div class="topbar">
+  <div id="hud">
     <button id="quitBtn">✕ やめる</button>
-    <div class="pill" id="prog">1 / 10</div>
-    <div class="pill" id="unitName" style="font-size:14px"></div>
+    <div id="timer">3:00</div>
+    <div id="score">0</div>
+    <div class="pill" id="prog" hidden></div>
   </div>
-  <div class="row"><span id="qKind">書く</span><span id="qUnit"></span></div>
+  <div id="feverBox">
+    <div id="feverHint">一致率 90%以上で 🔥FEVER!</div>
+    <div id="feverBadge" hidden>🔥 FEVER ×1</div>
+    <div id="feverBar" hidden><i></i></div>
+  </div>
+  <div id="qHead"><span id="qKind">書く</span><span id="qUnit"></span></div>
   <div id="qYomi"></div>
   <div id="qNote"></div>
-  <div id="padArea"><div id="pad"></div></div>
+  <div id="padArea"><div id="pad"></div><div id="pop"></div></div>
   <div class="row" id="tools">
     <button id="undoBtn">↩ もどす</button>
     <button id="clearBtn">🧽 ぜんぶけす</button>
     <button id="hintBtn">💡 ヒント（書き順アニメ）</button>
   </div>
   <button class="main" id="judgeBtn">できた!</button>
+
+  <!-- じっくり練習の結果 -->
   <div class="card" id="resultCard" hidden>
     <div id="verdict"></div>
     <div id="medal" hidden></div>
@@ -119,21 +172,37 @@ button.retry{background:linear-gradient(180deg,#fdba74,var(--orange));color:#fff
       <button class="go" id="nextBtn">つぎへ ▶</button>
     </div>
   </div>
+
+  <!-- チャレンジで❌のとき（タイマー停止中） -->
+  <div class="card" id="reviewCard" hidden>
+    <div class="paused">⏸ タイマーは止まっているよ。ゆっくり見なおそう</div>
+    <div id="rvVerdict" style="font-size:30px;font-weight:900;text-align:center;color:var(--red)">❌ ざんねん</div>
+    <div id="rvAnswer" style="text-align:center;font-weight:900;font-size:20px"></div>
+    <ul id="rvMsgs" style="margin:4px 0 0;padding-left:1.2em;font-weight:800;line-height:1.8;font-size:17px"></ul>
+    <div class="row" style="margin-top:10px">
+      <button id="rvAnim">🎬 正しい書き順</button>
+      <button id="rvReplay">▶ 自分の書き方</button>
+      <button class="go" id="rvNext">つぎへ ▶（タイマー再開）</button>
+    </div>
+  </div>
 </section>
 
 <!-- ===== 結果 ===== -->
 <section id="summary" class="screen">
   <h1 id="sumTitle">けっか</h1>
   <div id="sumScore"></div>
-  <div id="sumSub" style="font-weight:900;font-size:18px"></div>
+  <div id="sumBest"></div>
+  <div id="sumStats"></div>
   <div id="sumList"></div>
-  <p class="note" style="margin:0">⭕ 1回目で正解　🔺 書きなおしで正解　❌ まちがい</p>
+  <p class="note" id="sumLegend" style="margin:0"></p>
   <div class="row">
     <button class="retry" id="sumRetry">❌ まちがえた問題だけ もう一度</button>
-    <button class="go" id="sumAgain">🔁 もう一度ぜんぶ</button>
-    <button id="sumHome">🏠 単元えらびへ</button>
+    <button class="go" id="sumAgain">🔁 もう一回!</button>
+    <button id="sumHome">🏠 はじめの画面へ</button>
   </div>
 </section>
+
+<div id="bigText"></div>
 
 <script src="data/tests-g5-t2.js"></script>
 <script src="js/kanji-data.js"></script>
@@ -147,45 +216,90 @@ const $$ = s => [...document.querySelectorAll(s)];
 const TESTS = window.KANJI_TESTS;
 const KEY = 'kanjiTest.v1';
 
-/* ===== 保存（単元ごとの記録と設定） ===== */
+/* ===== チャレンジのルール（数値はここで調整） ===== */
+const RULE = {
+  time: 180000,          // 3分
+  base: 100,             // 1字あたりの基本点
+  silver: 80, gold: 90,  // 一致率のしきい値
+  feverTime: 20000,      // フィーバーの長さ（90%以上で20秒に戻る）
+  feverMax: 5,           // フィーバー倍率の上限
+  missGap: 3,            // 間違えた語を何問後にもう一度出すか
+};
+
+/* ===== 保存 ===== */
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
-const store = Object.assign({ opt: { read: 0, shuffle: 0 }, units: {} }, load());
+const store = Object.assign({ units: {}, best: {} }, load());
+store.opt = Object.assign({ mode: 'challenge', read: 0, shuffle: 0, sound: 1 }, store.opt);
 function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
 
+/* ===== 効果音（WebAudio。🔊ボタンで消せる） ===== */
+let AC = null;
+function ac() { if (!AC) try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, t, d, type = 'sine', v = .15) {
+  const a = ac(); if (!a || !store.opt.sound) return;
+  const o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + t;
+  o.type = type; o.frequency.setValueAtTime(f, t0);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + .01); g.gain.exponentialRampToValueAtTime(.001, t0 + d);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + d + .05);
+}
+const SFX = {
+  ok: m => { const b = 660 * Math.pow(1.06, Math.min(m, 8)); tone(b, 0, .12, 'triangle'); tone(b * 1.5, .08, .18, 'triangle'); },
+  fever: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .07, .25, 'square', .08)),
+  up: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, i * .05, .2, 'square', .08)),
+  ng: () => { tone(220, 0, .25, 'sawtooth', .07); tone(180, .15, .3, 'sawtooth', .07); },
+  tick: () => tone(1200, 0, .05, 'square', .04),
+  end: () => [784, 659, 523, 392].forEach((f, i) => tone(f, i * .12, .3, 'triangle', .12)),
+};
+
 /* ===== 画面 ===== */
-function show(id) { $$('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); }
+function show(id) { $$('.screen').forEach(s => s.classList.toggle('on', s.id === id)); $('.corner').hidden = id !== 'home'; window.scrollTo(0, 0); }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
+function bigText(t) { const b = $('#bigText'); b.innerHTML = ''; const s = document.createElement('span'); s.textContent = t; b.appendChild(s); setTimeout(() => { if (b.firstChild === s) b.innerHTML = ''; }, 1300); }
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+const kanjiCount = w => [...w].filter(KanjiData.isKanji).length;
+
+function allUnit() {
+  return { id: 'all', name: '🎲 ぜんぶの単元から', items: TESTS.units.flatMap(u => u.items.map(i => Object.assign({ unit: u.name }, i))) };
+}
+const poolOf = u => u.items.filter(i => store.opt.read || i.kind === 'write');
 
 function renderHome() {
-  $$('[data-opt]').forEach(b => b.classList.toggle('on', +b.dataset.val === store.opt[b.dataset.opt]));
+  $$('[data-opt]').forEach(b => b.classList.toggle('on', String(store.opt[b.dataset.opt]) === b.dataset.val));
+  $('#soundBtn').textContent = store.opt.sound ? '🔊' : '🔇';
+  const ch = store.opt.mode === 'challenge';
+  $('#orderRow').hidden = ch;
+  $('#rules').innerHTML = ch
+    ? `<li>3分間で何点とれるか! 手本なしで書こう</li><li>正解で 1字100点。一致率 80%以上で ×2、90%以上で ×3</li><li>90%以上で 🔥FEVER（20秒）。FEVER中にまた90%以上で 倍率アップ!（最大×${RULE.feverMax}）</li><li>まちがえると FEVER終了。見なおしの間は タイマーが止まるよ</li>`
+    : `<li>時間制限なし。1問ずつ じっくり書こう</li><li>まちがえたら お手本を見て 書きなおし</li>`;
   const box = $('#units'); box.innerHTML = '';
-  // 🎲 ぜんぶの単元からシャッフル
-  const all = allUnit(), aw = all.items.filter(i => store.opt.read || i.kind === 'write').length, arec = store.units.all;
-  const ab = document.createElement('div'); ab.className = 'unit all';
-  ab.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${aw}問からランダムに出題</span>` +
-    (arec ? `<span class="rec">前回 ${arec.last.ok}/${arec.last.total} 正解（${arec.last.date}）</span>` : '') +
-    `<div class="cnt"><button data-n="10">10問</button><button data-n="20">20問</button><button data-n="0">ぜんぶ（${aw}問）</button></div>`;
-  ab.querySelectorAll('[data-n]').forEach(b => b.onclick = () => startUnit(all, null, +b.dataset.n));
+  const all = allUnit(), an = poolOf(all).length;
+  const ab = document.createElement(ch ? 'button' : 'div'); ab.className = 'unit all';
+  ab.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${an}問からランダムに出題</span>` + recLine('all') +
+    (ch ? '' : `<div class="cnt"><button data-n="10">10問</button><button data-n="20">20問</button><button data-n="0">ぜんぶ（${an}問）</button></div>`);
+  if (ch) ab.onclick = () => startChallenge(all);
+  else ab.querySelectorAll('[data-n]').forEach(b => b.onclick = () => startStudy(all, null, +b.dataset.n));
   box.appendChild(ab);
   for (const u of TESTS.units) {
     const w = u.items.filter(i => i.kind === 'write').length, r = u.items.length - w;
-    const rec = store.units[u.id];
     const b = document.createElement('button'); b.className = 'unit';
-    b.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` +
-      (rec ? `<span class="rec">前回 ${rec.last.ok}/${rec.last.total} 正解（${rec.last.date}）・最高 ${rec.best.ok}/${rec.best.total}</span>` : '<span class="meta">まだ やっていない</span>');
-    b.onclick = () => startUnit(u);
+    b.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` + recLine(u.id);
+    b.onclick = () => ch ? startChallenge(u) : startStudy(u);
     box.appendChild(b);
   }
   const t = ScoreGame.totals();
   $('#totals').textContent = `🥇${t.gold}　🥈${t.silver}　🥉${t.bronze}`;
   $('#srcNote').textContent = `出題データ: ${TESTS.source}`;
 }
-$$('[data-opt]').forEach(b => b.onclick = () => { store.opt[b.dataset.opt] = +b.dataset.val; save(); renderHome(); });
-
-// 全単元をまとめた仮の単元（問題には元の単元名をつけておく）
-function allUnit() {
-  return { id: 'all', name: '🎲 ぜんぶの単元から', items: TESTS.units.flatMap(u => u.items.map(i => Object.assign({ unit: u.name }, i))) };
+function recLine(id) {
+  if (store.opt.mode === 'challenge') {
+    const b = store.best[id + (store.opt.read ? ':r' : '')];
+    return b ? `<span class="rec">🏆 ハイスコア ${b.score.toLocaleString()}点（${b.date}）</span>` : '<span class="meta">まだ記録なし</span>';
+  }
+  const rec = store.units[id];
+  return rec ? `<span class="rec">前回 ${rec.last.ok}/${rec.last.total} 正解（${rec.last.date}）</span>` : '<span class="meta">まだ やっていない</span>';
 }
+$$('[data-opt]').forEach(b => b.onclick = () => { store.opt[b.dataset.opt] = isNaN(+b.dataset.val) ? b.dataset.val : +b.dataset.val; save(); renderHome(); });
+$('#soundBtn').onclick = () => { store.opt.sound = store.opt.sound ? 0 : 1; save(); $('#soundBtn').textContent = store.opt.sound ? '🔊' : '🔇'; ac(); };
 
 /* ===== ヒント文: 答えの漢字が入っていたら、よみがなに置きかえる ===== */
 function maskNote(note, word, yomi) {
@@ -197,108 +311,251 @@ function maskNote(note, word, yomi) {
     const kanji = [...word].filter(KanjiData.isKanji).join('');
     if (kanji && note.includes(kanji)) h = h.split(esc(kanji)).join(mark);
   }
-  for (const ch of word) if (KanjiData.isKanji(ch)) h = h.split(ch).join('〇');   // 残った答えの字はかくす
+  for (const ch of word) if (KanjiData.isKanji(ch)) h = h.split(ch).join('〇');
   return 'ヒント：' + h;
 }
 
-/* ===== 出題 ===== */
-let S = null;   // { unit, list, idx, results[], attempt, assisted, tmpls, judged }
+/* ===== 共通: 問題を表示して判定する ===== */
 const pad = new WritingPad($('#pad'), { penMode: 'auto' });
+let MODE = null;      // 'challenge' | 'study'
+let curItem = null, curTmpls = [];
 
-const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
-// count: ぜんぶの単元からシャッフルのときの問題数（0 = ぜんぶ）
-function startUnit(u, onlyItems, count = 0) {
-  let list = onlyItems || u.items.filter(i => store.opt.read || i.kind === 'write');
-  if (!onlyItems && (store.opt.shuffle || u.id === 'all')) list = shuffle(list);
-  if (!onlyItems && count) list = list.slice(0, count);
-  S = { unit: u, list, idx: 0, results: [], retryRound: !!onlyItems, count };
-  $('#unitName').textContent = u.name;
-  show('play');
-  loadQ();
-}
-async function loadQ() {
-  const it = S.list[S.idx];
-  S.attempt = 0; S.assisted = false; S.judged = false;
-  $('#prog').textContent = `${S.idx + 1} / ${S.list.length}`;
+async function showItem(it) {
+  curItem = it;
   $('#qKind').textContent = it.kind === 'write' ? `書く ${it.n}` : `読む ${it.n}`;
   $('#qKind').className = it.kind;
-  $('#qYomi').textContent = it.yomi;
   $('#qUnit').textContent = it.unit || '';
+  $('#qYomi').textContent = it.yomi;
   $('#qNote').innerHTML = maskNote(it.note, it.word, it.yomi);
-  $('#resultCard').hidden = true; $('#judgeBtn').hidden = false; $('#tools').hidden = false;
+  $('#resultCard').hidden = $('#reviewCard').hidden = true;
+  $('#judgeBtn').hidden = $('#tools').hidden = false;
   $('#hintBtn').classList.remove('on');
   const segs = KanjiData.parseWord(it.word);
   const kanji = segs.filter(s => s.type === 'kanji').map(s => s.ch);
-  S.tmpls = await Promise.all(kanji.map(ch => KanjiData.get(ch).catch(() => null)));
-  pad.setWord(segs, S.tmpls);
+  curTmpls = await Promise.all(kanji.map(ch => KanjiData.get(ch).catch(() => null)));
+  if (curItem !== it) return false;
+  pad.setWord(segs, curTmpls);
+  return true;
 }
-function judge() {
-  if (!S || S.tmpls.some(t => !t) || !pad.strokes.length) return;
+function judgeCurrent() {
+  if (!curItem || curTmpls.some(t => !t) || !pad.strokes.length) return null;
   pad.stopModel();
-  const it = S.list[S.idx];
   const { strokes } = pad.strokesByCell();
-  const r = KanjiJudge.judgeWord(strokes, S.tmpls.map(t => t.lines), { tolerance: 'normal' });
+  const r = KanjiJudge.judgeWord(strokes, curTmpls.map(t => t.lines), { tolerance: 'normal' });
   pad.showResult(r);
-  S.attempt++; S.judged = true;
+  const kanji = [...curItem.word].filter(KanjiData.isKanji);
+  r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
+  return r;
+}
+function fillList(ul, msgs) { ul.innerHTML = ''; for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); } }
+
+/* ================================================================
+ * ⏱ 3分チャレンジ
+ * ================================================================ */
+let C = null;
+function startChallenge(u) {
+  ac();
+  const pool = poolOf(u);
+  if (!pool.length) return;
+  MODE = 'challenge';
+  C = { unit: u, pool, queue: [], misses: [], answered: 0, last: null,
+    left: RULE.time, running: false, tPrev: 0, ended: false, busy: false,
+    score: 0, fever: false, mult: 1, feverLeft: 0, maxMult: 0, ok: 0, ng: 0, gold: 0, log: [] };
+  $('#hud').querySelector('#prog').hidden = true;
+  $('#timer').hidden = $('#score').hidden = $('#feverBox').hidden = false;
+  $('#hintBtn').hidden = true;                    // チャレンジ中はヒントなし
+  $('#score').textContent = '0';
+  setFever(false);
+  show('play');
+  nextChallenge().then(() => { bigText('スタート!'); resume(); });
+}
+// 次の語: 間違えた語の再出題 → 山札（一巡するまで同じ語は出さない）
+function drawItem() {
+  const due = C.misses.findIndex(m => m.at <= C.answered);
+  if (due >= 0) return C.misses.splice(due, 1)[0].item;
+  if (!C.queue.length) {
+    C.queue = shuffle(C.pool);
+    if (C.queue.length > 1 && C.queue[0] === C.last) C.queue.push(C.queue.shift());
+  }
+  return C.queue.shift();
+}
+async function nextChallenge() {
+  const it = drawItem(); C.last = it;
+  await showItem(it);
+  C.busy = false;      // 読みこみ中は「できた!」を受け付けない
+}
+// タイマー（setInterval + 実時間の差分。止めている間は進まない）
+function resume() { if (!C || C.ended) return; C.running = true; C.tPrev = performance.now(); $('#timer').classList.remove('paused'); }
+function pause() { if (!C) return; C.running = false; $('#timer').classList.add('paused'); }
+let lastSec = -1;
+setInterval(() => {
+  if (!C || !C.running || C.ended) return;
+  const now = performance.now(), dt = now - C.tPrev; C.tPrev = now;
+  C.left -= dt;
+  if (C.fever) { C.feverLeft -= dt; if (C.feverLeft <= 0) setFever(false); }
+  drawTimer();
+  if (C.left <= 0) endChallenge();
+}, 100);
+function drawTimer() {
+  const s = Math.max(0, Math.ceil(C.left / 1000));
+  $('#timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  $('#timer').classList.toggle('low', s <= 10);
+  if (s <= 10 && s !== lastSec && s > 0) SFX.tick();
+  lastSec = s;
+  if (C.fever) $('#feverBar i').style.width = Math.max(0, C.feverLeft / RULE.feverTime * 100) + '%';
+}
+function setFever(on) {
+  if (C) { C.fever = on; if (!on) C.mult = 1; }
+  document.body.classList.toggle('fever', on);
+  $('#feverBadge').hidden = $('#feverBar').hidden = !on;
+  $('#feverHint').hidden = on;
+  if (on) $('#feverBadge').textContent = `🔥 FEVER ×${C.mult}`;
+}
+function judgeChallenge() {
+  if (!C || C.busy || C.ended) return;
+  const r = judgeCurrent(); if (!r) return;
+  C.busy = true; C.answered++;
+  const it = curItem, n = kanjiCount(it.word);
+  if (r.ok) {
+    const pct = r.score;
+    const rankMult = pct >= RULE.gold ? 3 : pct >= RULE.silver ? 2 : 1;
+    let feverStart = false, feverUp = false;
+    if (pct >= RULE.gold) {
+      if (C.fever) { if (C.mult < RULE.feverMax) { C.mult++; feverUp = true; } }
+      else { C.mult = 1; feverStart = true; }
+      C.feverLeft = RULE.feverTime;
+      setFever(true);
+      C.gold++;
+    }
+    const fm = C.fever ? C.mult : 1;
+    const pts = RULE.base * n * rankMult * fm;
+    C.score += pts; C.ok++; C.maxMult = Math.max(C.maxMult, C.fever ? C.mult : 0);
+    C.log.push({ item: it, ok: true, pct, pts });
+    ScoreGame.record(it.word, r, {});
+    // 演出
+    const sc = $('#score'); sc.textContent = C.score.toLocaleString(); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump');
+    const mtxt = [rankMult > 1 ? `一致率 ${pct}% ×${rankMult}` : `一致率 ${pct}%`, fm > 1 ? `FEVER ×${fm}` : ''].filter(Boolean).join('　');
+    $('#pop').innerHTML = `<div class="pts">+${pts.toLocaleString()}</div><div class="sub">${esc(mtxt)}</div>`;
+    if (feverStart) { bigText('🔥 FEVER!'); SFX.fever(); }
+    else if (feverUp) { bigText(`FEVER ×${C.mult}!`); SFX.up(); }
+    else SFX.ok(fm);
+    pad.locked = true;
+    setTimeout(() => { $('#pop').innerHTML = ''; if (!C.ended) nextChallenge(); }, 1000);
+  } else {
+    // ❌: 0点・FEVER終了・タイマー停止・見なおし
+    pause(); SFX.ng();
+    if (C.fever) setFever(false);
+    C.ng++;
+    C.log.push({ item: it, ok: false, pct: 0, pts: 0 });
+    C.misses.push({ item: it, at: C.answered + RULE.missGap });
+    $('#rvAnswer').innerHTML = `こたえ：<span style="font-family:'Klee One',serif;font-size:30px">${esc(it.word)}</span>`;
+    fillList($('#rvMsgs'), r.msgList);
+    $('#judgeBtn').hidden = $('#tools').hidden = true;
+    $('#reviewCard').hidden = false;
+    setTimeout(() => $('#reviewCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+function endChallenge() {
+  if (!C || C.ended) return;
+  C.ended = true; C.running = false; C.left = 0; drawTimer();
+  pad.locked = true; pad.stopModel();
+  setFever(false); SFX.end(); bigText('そこまで!');
+  setTimeout(showChallengeResult, 1400);
+}
+function showChallengeResult() {
+  const key = C.unit.id + (store.opt.read ? ':r' : '');
+  const prev = store.best[key];
+  const isBest = C.score > 0 && (!prev || C.score > prev.score);
+  if (isBest) { store.best[key] = { score: C.score, date: new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) }; save(); }
+  $('#sumTitle').textContent = `⏱ 3分チャレンジ ${C.unit.name}`;
+  $('#sumScore').innerHTML = `${C.score.toLocaleString()}<small> 点</small>`;
+  const sb = $('#sumBest');
+  sb.className = isBest ? 'new' : '';
+  sb.textContent = isBest ? (prev ? `🎉 ハイスコア更新!（前の記録 ${prev.score.toLocaleString()}点）` : '🏆 はじめての記録!') : prev ? `ハイスコア ${prev.score.toLocaleString()}点` : '';
+  $('#sumStats').innerHTML = `<div>⭕ 正解 ${C.ok}</div><div>❌ まちがい ${C.ng}</div><div>🥇 90%以上 ${C.gold}</div><div>🔥 最高 FEVER ×${C.maxMult || '-'}</div>`;
+  const box = $('#sumList'); box.innerHTML = '';
+  C.log.forEach(l => {
+    const d = document.createElement('div'); d.className = 'si';
+    d.innerHTML = `<div><div class="w">${esc(l.item.word)}</div><div class="y">${esc(l.item.yomi)}</div></div><div class="r">${l.ok ? `⭕ ${l.pct}%<br>+${l.pts.toLocaleString()}` : '❌'}</div>`;
+    box.appendChild(d);
+  });
+  $('#sumLegend').textContent = '';
+  $('#sumRetry').hidden = true;
+  $('#sumAgain').onclick = () => startChallenge(C.unit);
+  show('summary');
+  if (isBest) { bigText(prev ? 'ハイスコア!' : 'きろく!'); SFX.fever(); }
+}
+
+/* ================================================================
+ * 📝 じっくり練習（時間制限なし）
+ * ================================================================ */
+let S = null;
+function startStudy(u, onlyItems, count = 0) {
+  ac();
+  let list = onlyItems || poolOf(u);
+  if (!onlyItems && (store.opt.shuffle || u.id === 'all')) list = shuffle(list);
+  if (!onlyItems && count) list = list.slice(0, count);
+  if (!list.length) return;
+  MODE = 'study'; C = null;
+  S = { unit: u, list, idx: 0, results: [], retryRound: !!onlyItems, count };
+  $('#timer').hidden = $('#score').hidden = $('#feverBox').hidden = true;
+  $('#prog').hidden = false; $('#hintBtn').hidden = false;
+  setFever(false);
+  show('play');
+  loadStudy();
+}
+async function loadStudy() {
+  S.attempt = 0; S.assisted = false;
+  $('#prog').textContent = `${S.idx + 1} / ${S.list.length}`;
+  await showItem(S.list[S.idx]);
+}
+function judgeStudy() {
+  const r = judgeCurrent(); if (!r) return;
+  const it = curItem;
+  S.attempt++;
   const res = S.results[S.idx] || (S.results[S.idx] = { item: it });
   if (S.attempt === 1) { res.firstOk = r.ok; res.score = r.ok ? r.score : null; res.assisted = S.assisted; }
   else if (r.ok) res.fixed = true;
-
-  const kanji = [...it.word].filter(KanjiData.isKanji);
-  const msgs = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
   $('#verdict').className = r.ok ? 'ok' : 'ng';
   $('#verdict').textContent = r.ok ? (S.attempt === 1 ? '⭕ 正解!' : '⭕ 書きなおし できたね!') : '❌ ざんねん';
-  const ul = $('#msgs'); ul.innerHTML = '';
-  for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
+  fillList($('#msgs'), r.msgList);
   showMedal(r.ok && S.attempt === 1 ? ScoreGame.record(it.word, r, { assisted: S.assisted }) : { counted: false, reason: r.ok ? 'retry' : 'ng' });
+  r.ok ? SFX.ok(1) : SFX.ng();
   $('#retryBtn').hidden = r.ok;
   $('#nextBtn').textContent = S.idx + 1 < S.list.length ? 'つぎへ ▶' : 'けっかを見る ▶';
-  $('#resultCard').hidden = false; $('#judgeBtn').hidden = true; $('#tools').hidden = true;
+  $('#resultCard').hidden = false; $('#judgeBtn').hidden = $('#tools').hidden = true;
   setTimeout(() => $('#resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 }
 function showMedal(g) {
   const m = $('#medal'), note = $('#medalNote');
   m.hidden = true; note.textContent = ''; note.className = '';
-  if (!g.counted) {
-    if (g.reason === 'assisted') note.textContent = '💡 ヒントを見たので、今回は点数なし';
-    return;
-  }
+  if (!g.counted) { if (g.reason === 'assisted') note.textContent = '💡 ヒントを見たので、今回は点数なし'; return; }
   m.className = g.rank.id; m.hidden = false;
   m.innerHTML = `<span class="em">${g.rank.emoji}</span><span class="sc">${g.score}%<small>お手本との一致率</small></span><span class="lb">${g.rank.label}</span>`;
   if (g.newBest) { note.textContent = `🎉 自己ベスト更新!（${g.prevBest}% → ${g.score}%）`; note.className = 'best'; }
   else if (!g.first) note.textContent = `自己ベスト ${g.best}%`;
 }
-// ❌のあと: お手本アニメを見てから、もう一度書く
-function retry() {
-  pad.clear(); S.assisted = true; S.judged = false;
-  $('#resultCard').hidden = true; $('#judgeBtn').hidden = false; $('#tools').hidden = false;
-  pad.animateModel();
-}
-function next() {
-  if (S.idx + 1 < S.list.length) { S.idx++; loadQ(); }
-  else finish();
-}
-
-/* ===== 結果 ===== */
-function finish() {
-  const total = S.list.length;
-  const ok = S.results.filter(r => r && r.firstOk).length;
+function finishStudy() {
+  const total = S.list.length, ok = S.results.filter(r => r && r.firstOk).length;
   const scored = S.results.filter(r => r && r.firstOk && !r.assisted && r.score != null);
   const avg = scored.length ? Math.round(scored.reduce((a, r) => a + r.score, 0) / scored.length) : null;
   $('#sumTitle').textContent = `${S.unit.name}${S.retryRound ? '（なおし）' : ''}`;
   $('#sumScore').innerHTML = `${ok}<small> / ${total} 正解</small>`;
-  $('#sumSub').textContent = (ok === total ? '🎉 ぜんぶ正解! ' : '') + (avg != null ? `一致率の平均 ${avg}%` : '');
+  $('#sumBest').className = ''; $('#sumBest').textContent = (ok === total ? '🎉 ぜんぶ正解! ' : '') + (avg != null ? `一致率の平均 ${avg}%` : '');
+  $('#sumStats').innerHTML = '';
   const box = $('#sumList'); box.innerHTML = '';
   S.list.forEach((it, i) => {
     const r = S.results[i] || {};
     const d = document.createElement('div'); d.className = 'si';
-    d.innerHTML = `<div><div class="w">${esc(it.word)}</div><div class="y">${esc(it.yomi)}</div></div><div class="r">${r.firstOk ? '⭕' : r.fixed ? '🔺' : '❌'}</div>`;
+    d.innerHTML = `<div><div class="w">${esc(it.word)}</div><div class="y">${esc(it.yomi)}</div></div><div class="r" style="font-size:22px">${r.firstOk ? '⭕' : r.fixed ? '🔺' : '❌'}</div>`;
     box.appendChild(d);
   });
+  $('#sumLegend').textContent = '⭕ 1回目で正解　🔺 書きなおしで正解　❌ まちがい';
   const wrong = S.list.filter((_, i) => !(S.results[i] && S.results[i].firstOk));
   $('#sumRetry').hidden = !wrong.length;
-  $('#sumRetry').onclick = () => startUnit(S.unit, wrong);
-  if (!S.retryRound) {   // 単元の記録（なおしの回は記録しない）
+  $('#sumRetry').onclick = () => startStudy(S.unit, wrong);
+  $('#sumAgain').onclick = () => startStudy(S.unit, null, S.count);
+  if (!S.retryRound) {
     const date = new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
     const rec = store.units[S.unit.id] || { best: { ok: 0, total } };
     rec.last = { ok, total, date };
@@ -313,18 +570,31 @@ $('#undoBtn').onclick = () => pad.undo();
 $('#clearBtn').onclick = () => pad.clear();
 $('#hintBtn').onclick = () => {
   if (pad.animating) { pad.stopModel(); $('#hintBtn').classList.remove('on'); return; }
-  S.assisted = true; $('#hintBtn').classList.add('on');
+  if (S) S.assisted = true;
+  $('#hintBtn').classList.add('on');
   pad.animateModel({ onDone: () => $('#hintBtn').classList.remove('on') });
 };
-$('#judgeBtn').onclick = judge;
-$('#retryBtn').onclick = retry;
-$('#nextBtn').onclick = next;
-$('#quitBtn').onclick = () => { if (confirm('れんしゅうを やめる？')) { S = null; renderHome(); show('home'); } };
-$('#sumAgain').onclick = () => startUnit(S.unit, null, S.count);
+$('#judgeBtn').onclick = () => MODE === 'challenge' ? judgeChallenge() : judgeStudy();
+// じっくり練習
+$('#retryBtn').onclick = () => {
+  pad.clear(); S.assisted = true;
+  $('#resultCard').hidden = true; $('#judgeBtn').hidden = $('#tools').hidden = false;
+  pad.animateModel();
+};
+$('#nextBtn').onclick = () => { if (S.idx + 1 < S.list.length) { S.idx++; loadStudy(); } else finishStudy(); };
+// チャレンジの見なおし（タイマー停止中）
+$('#rvAnim').onclick = () => { pad.clearResult(); pad.animateModel(); };
+$('#rvReplay').onclick = () => { pad.stopModel(); pad.replay(); };
+$('#rvNext').onclick = () => { pad.stopModel(); $('#reviewCard').hidden = true; nextChallenge().then(resume); };
+$('#quitBtn').onclick = () => {
+  const wasRunning = C && C.running; if (wasRunning) pause();
+  if (confirm('やめる？（記録は残りません）')) { if (C) C.ended = true; C = null; S = null; setFever(false); renderHome(); show('home'); }
+  else if (wasRunning) resume();
+};
 $('#sumHome').onclick = () => { renderHome(); show('home'); };
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if ($('#play').classList.contains('on')) pad.layout(); }, 200); });
 
-window.__practice = { pad, get S() { return S; }, startUnit, judge, maskNote };
+window.__practice = { pad, get S() { return S; }, get C() { return C; }, startStudy, startChallenge, maskNote, RULE };
 renderHome();
 </script>
 </body>
