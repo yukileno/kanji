@@ -99,8 +99,8 @@ details summary{cursor:pointer;font-weight:800}
 
   <div class="card">
     <div class="row">きびしさ：
-      <button data-tol="easy">あまめ</button>
-      <button data-tol="normal" class="on">ふつう</button>
+      <button data-tol="easy" class="on">あまめ</button>
+      <button data-tol="normal">ふつう</button>
       <button data-tol="strict">きびしめ</button>
     </div>
     <div class="row" style="margin-top:8px">入力：
@@ -133,7 +133,7 @@ const WORDS = [['技術', 'ぎじゅつ'], ['貿易', 'ぼうえき'], ['検査'
   ['責任', 'せきにん'], ['規則', 'きそく'], ['永久', 'えいきゅう'], ['迷う', 'まよう'], ['輸出', 'ゆしゅつ'], ['増える', 'ふえる'], ['土', 'つち'], ['士', 'し']];
 const LOGKEY = 'kanjiM1.log';
 
-let tol = 'normal', cur = null, lastJudge = null;
+let tol = 'easy', cur = null, lastJudge = null;
 let medalG = null;     // 今の書字で記録済みのメダル（きびしさ変更で再判定しても二重に数えない）
 let assisted = false;   // この語でお手本・書き順アニメを見たら true（点数なしの練習扱い）
 const pad = new WritingPad($('#pad'), { penMode: 'auto', onStroke: () => { medalG = null; hideMedal(); } });

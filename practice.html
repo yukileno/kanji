@@ -93,6 +93,11 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 #bigText span{font-size:clamp(56px,12vw,120px);font-weight:900;color:#fff;-webkit-text-stroke:4px #f43f5e;text-shadow:0 8px 0 #9f1239aa;animation:bigIn 1.3s ease-out forwards}
 @keyframes bigIn{0%{transform:scale(.2) rotate(-10deg);opacity:0}25%{transform:scale(1.1) rotate(3deg);opacity:1}75%{transform:scale(1);opacity:1}100%{transform:scale(1.4);opacity:0}}
 #reviewCard{border:3px solid #fecaca}
+#hud{position:relative;z-index:6}
+#dlg{position:fixed;inset:0;z-index:50;background:#0006;display:grid;place-items:center;padding:16px}
+#dlg .box{background:#fff;border-radius:24px;padding:24px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px #0004}
+#dlg p{font-size:22px;font-weight:900;margin:0 0 6px}
+#dlg small{display:block;color:var(--muted);font-weight:800;margin-bottom:16px}
 #reviewCard .paused{font-size:14px;font-weight:900;color:var(--muted);text-align:center}
 
 /* ===== 結果 ===== */
@@ -203,6 +208,8 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 </section>
 
 <div id="bigText"></div>
+<div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
+  <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
 <script src="data/tests-g5-t2.js"></script>
 <script src="js/kanji-data.js"></script>
@@ -224,6 +231,7 @@ const RULE = {
   feverTime: 20000,      // フィーバーの長さ（90%以上で20秒に戻る）
   feverMax: 5,           // フィーバー倍率の上限
   missGap: 3,            // 間違えた語を何問後にもう一度出すか
+  tolerance: 'easy',     // 判定のきびしさ（easy / normal / strict）
 };
 
 /* ===== 保存 ===== */
@@ -341,7 +349,7 @@ function judgeCurrent() {
   if (!curItem || curTmpls.some(t => !t) || !pad.strokes.length) return null;
   pad.stopModel();
   const { strokes } = pad.strokesByCell();
-  const r = KanjiJudge.judgeWord(strokes, curTmpls.map(t => t.lines), { tolerance: 'normal' });
+  const r = KanjiJudge.judgeWord(strokes, curTmpls.map(t => t.lines), { tolerance: RULE.tolerance });
   pad.showResult(r);
   const kanji = [...curItem.word].filter(KanjiData.isKanji);
   r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
@@ -367,7 +375,8 @@ function startChallenge(u) {
   $('#score').textContent = '0';
   setFever(false);
   show('play');
-  nextChallenge().then(() => { bigText('スタート!'); resume(); });
+  const run = C;
+  nextChallenge().then(() => { if (C !== run) return; bigText('スタート!'); resume(); });
 }
 // 次の語: 間違えた語の再出題 → 山札（一巡するまで同じ語は出さない）
 function drawItem() {
@@ -440,7 +449,8 @@ function judgeChallenge() {
     else if (feverUp) { bigText(`FEVER ×${C.mult}!`); SFX.up(); }
     else SFX.ok(fm);
     pad.locked = true;
-    setTimeout(() => { $('#pop').innerHTML = ''; if (!C.ended) nextChallenge(); }, 1000);
+    const run = C;
+    setTimeout(() => { $('#pop').innerHTML = ''; if (C === run && !run.ended) nextChallenge(); }, 1000);
   } else {
     // ❌: 0点・FEVER終了・タイマー停止・見なおし
     pause(); SFX.ng();
@@ -460,7 +470,8 @@ function endChallenge() {
   C.ended = true; C.running = false; C.left = 0; drawTimer();
   pad.locked = true; pad.stopModel();
   setFever(false); SFX.end(); bigText('そこまで!');
-  setTimeout(showChallengeResult, 1400);
+  const run = C;
+  setTimeout(() => { if (C === run) showChallengeResult(); }, 1400);
 }
 function showChallengeResult() {
   const key = C.unit.id + (store.opt.read ? ':r' : '');
@@ -585,11 +596,20 @@ $('#nextBtn').onclick = () => { if (S.idx + 1 < S.list.length) { S.idx++; loadSt
 // チャレンジの見なおし（タイマー停止中）
 $('#rvAnim').onclick = () => { pad.clearResult(); pad.animateModel(); };
 $('#rvReplay').onclick = () => { pad.stopModel(); pad.replay(); };
-$('#rvNext').onclick = () => { pad.stopModel(); $('#reviewCard').hidden = true; nextChallenge().then(resume); };
+$('#rvNext').onclick = () => { if (!C) return; pad.stopModel(); $('#reviewCard').hidden = true; const run = C; nextChallenge().then(() => { if (C === run) resume(); }); };
+// やめる: ブラウザの confirm は学校の端末で出ないことがあるので、ページ内の確認画面を使う
 $('#quitBtn').onclick = () => {
-  const wasRunning = C && C.running; if (wasRunning) pause();
-  if (confirm('やめる？（記録は残りません）')) { if (C) C.ended = true; C = null; S = null; setFever(false); renderHome(); show('home'); }
-  else if (wasRunning) resume();
+  const wasRunning = !!(C && C.running); if (wasRunning) pause();
+  $('#dlgMsg').textContent = 'やめる？';
+  $('#dlgSub').textContent = MODE === 'challenge' ? '（この回の点数は記録されません）' : '';
+  $('#dlg').hidden = false;
+  $('#dlgYes').onclick = () => {
+    $('#dlg').hidden = true;
+    pad.stopModel();
+    if (C) C.ended = true; C = null; S = null; setFever(false); $('#bigText').innerHTML = '';
+    renderHome(); show('home');
+  };
+  $('#dlgNo').onclick = () => { $('#dlg').hidden = true; if (wasRunning) resume(); };
 };
 $('#sumHome').onclick = () => { renderHome(); show('home'); };
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if ($('#play').classList.contains('on')) pad.layout(); }, 200); });
