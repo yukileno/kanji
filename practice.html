@@ -159,7 +159,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
     <div class="pill" id="prog" hidden></div>
   </div>
   <div id="feverBox">
-    <div id="feverHint">一致率 80%以上で 🔥FEVER!</div>
+    <div id="feverHint">一致率 75%以上で 🔥FEVER!</div>
     <div id="feverBadge" hidden>🔥 FEVER ×1</div>
     <div id="feverBar" hidden><i></i></div>
   </div>
@@ -219,11 +219,11 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 <div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
   <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
-<script src="data/tests-g5-t2.js"></script>
-<script src="js/kanji-data.js"></script>
-<script src="js/judge.js"></script>
-<script src="js/pad.js"></script>
-<script src="js/score-game.js"></script>
+<script src="data/tests-g5-t2.js?v=20261003c"></script>
+<script src="js/kanji-data.js?v=20261003c"></script>
+<script src="js/judge.js?v=20261003c"></script>
+<script src="js/pad.js?v=20261003c"></script>
+<script src="js/score-game.js?v=20261003c"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -236,11 +236,11 @@ const RULE = {
   time: 180000,          // 3分
   base: 100,             // 1字あたりの基本点
   silver: 80, gold: 90,  // 一致率のしきい値（得点倍率 ×2 / ×3）
-  feverAt: 80,           // この一致率以上で FEVER 開始・倍率アップ
+  feverAt: 75,           // この一致率以上で FEVER 開始・倍率アップ
   feverTime: 20000,      // フィーバーの長さ（feverAt 以上で20秒に戻る）
   feverMax: 5,           // フィーバー倍率の上限
   missGap: 3,            // 間違えた語を何問後にもう一度出すか
-  tolerance: 'easy',     // 判定のきびしさ（easy / normal / strict）
+  tolerance: 'superEasy',// 判定のきびしさ（superEasy=激甘 / easy / normal / strict）
 };
 
 /* ===== 保存 ===== */

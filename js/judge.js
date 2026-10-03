@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const N = 32;                                            // 1画あたりのリサンプル点数
-  const LEVELS = { easy: .17, normal: .13, strict: .095 }; // 形のずれの許容量（字の大きさ=約0.8 に対する平均距離）
+  const LEVELS = { superEasy: .23, easy: .17, normal: .13, strict: .095 };   // superEasy=激甘（入/人・夫/天 は区別できなくなる） // 形のずれの許容量（字の大きさ=約0.8 に対する平均距離）
   const MAX_SHAPE_MSGS = 2;
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
