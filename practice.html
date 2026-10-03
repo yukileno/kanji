@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>漢字テスト れんしゅう</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff3b6b;--green:#16a34a;--orange:#ea580c;--red:#dc2626;--purple:#7c3aed;--blue:#2563eb;--ink:#1f2a44;--muted:#64748b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,#fde2ec,#dbeafe);min-height:100vh;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.screen{display:none;max-width:1100px;margin:0 auto;padding:16px;flex-direction:column;align-items:center;gap:12px}
+.screen.on{display:flex}
+h1{font-size:28px;margin:10px 0 0}
+.card{background:#fffffff2;border-radius:20px;box-shadow:0 6px 20px #0001;padding:14px 18px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:10px 18px;font-size:17px;background:#fff;color:var(--ink);box-shadow:0 2px 0 #0002,0 0 0 1px #0001;cursor:pointer}
+button:active{transform:translateY(1px);box-shadow:none}
+button.on{background:var(--purple);color:#fff}
+button.main{background:linear-gradient(180deg,#ff6b95,var(--pink));color:#fff;font-size:24px;padding:12px 44px;box-shadow:0 4px 0 #b3123f}
+button.go{background:linear-gradient(180deg,#60a5fa,var(--blue));color:#fff;font-size:20px;padding:12px 30px;box-shadow:0 4px 0 #1e3a8a}
+button.retry{background:linear-gradient(180deg,#fdba74,var(--orange));color:#fff;font-size:20px;padding:12px 26px;box-shadow:0 4px 0 #9a3412}
+
+/* 単元えらび */
+#units{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;width:100%}
+.unit{text-align:left;border-radius:20px;padding:16px 18px;background:#fff;box-shadow:0 6px 18px #0001;display:flex;flex-direction:column;gap:6px;font-size:16px}
+.unit b{font-size:20px}
+.unit .meta{color:var(--muted);font-size:14px}
+.unit .rec{font-size:14px;color:var(--green)}
+.unit.all{grid-column:1/-1;background:linear-gradient(135deg,#fff7ed,#fdf2f8);box-shadow:0 6px 18px #0001,0 0 0 3px #fbcfe8}
+.unit.all .cnt{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.unit.all .cnt button{font-size:16px;padding:8px 18px}
+#qUnit{font-size:13px;font-weight:800;color:var(--muted)}
+#totals{font-weight:900;font-size:18px}
+
+/* 問題 */
+.topbar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{background:#fff;border-radius:999px;padding:6px 16px;font-weight:900;font-size:18px;box-shadow:0 2px 0 #0002}
+#qKind{font-size:14px;font-weight:900;color:#fff;background:var(--blue);border-radius:999px;padding:2px 12px}
+#qKind.read{background:#0d9488}
+#qYomi{font-size:clamp(34px,6vw,54px);font-weight:900;letter-spacing:.06em;line-height:1.2;text-align:center}
+#qNote{font-size:18px;font-weight:800;color:var(--muted);min-height:1.4em;text-align:center}
+#qNote mark{background:#fef08a;color:var(--ink);border-radius:4px;padding:0 3px}
+#padArea{width:100%;display:flex;justify-content:center}
+.wpad{position:relative;background:#fff;border-radius:16px;box-shadow:0 8px 24px #0002,0 0 0 5px #fff}
+.wpad canvas{position:absolute;inset:0;border-radius:16px}
+.wpad canvas:last-child{touch-action:none;cursor:crosshair}
+#verdict{font-size:32px;font-weight:900;text-align:center}
+#verdict.ok{color:var(--green)} #verdict.ng{color:var(--red)}
+#msgs{margin:4px 0 0;padding-left:1.2em;font-weight:800;line-height:1.8;font-size:17px}
+#medal{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 2px}
+#medal .em{font-size:60px;line-height:1;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+#medal .sc{font-size:42px;font-weight:900;line-height:1}
+#medal .sc small{display:block;font-size:14px;color:var(--muted)}
+#medal .lb{font-size:18px;font-weight:900}
+#medal.gold .sc{color:#ca8a04} #medal.silver .sc{color:#64748b} #medal.bronze .sc{color:#b45309}
+#medalNote{text-align:center;font-weight:900;min-height:1.4em}
+#medalNote.best{color:var(--pink);animation:pop .6s}
+@keyframes pop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+
+/* 結果 */
+#sumScore{font-size:64px;font-weight:900;line-height:1}
+#sumScore small{font-size:24px}
+#sumList{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;width:100%}
+.si{background:#fff;border-radius:14px;padding:8px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 2px 6px #0001}
+.si .w{font-family:"Klee One",serif;font-size:24px}
+.si .y{font-size:13px;color:var(--muted)}
+.si .r{margin-left:auto;font-size:22px}
+.note{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ===== 単元えらび ===== -->
+<section id="home" class="screen on">
+  <h1>✍ 漢字テスト れんしゅう</h1>
+  <div id="totals"></div>
+  <div class="card">
+    <div class="row">問題：
+      <button data-opt="read" data-val="0" class="on">「書く」問題だけ</button>
+      <button data-opt="read" data-val="1">「読む」問題も書く</button>
+    </div>
+    <div class="row" style="margin-top:8px">順番：
+      <button data-opt="shuffle" data-val="0" class="on">番号順</button>
+      <button data-opt="shuffle" data-val="1">バラバラ</button>
+    </div>
+  </div>
+  <div id="units"></div>
+  <p class="note" id="srcNote"></p>
+</section>
+
+<!-- ===== 問題 ===== -->
+<section id="play" class="screen">
+  <div class="topbar">
+    <button id="quitBtn">✕ やめる</button>
+    <div class="pill" id="prog">1 / 10</div>
+    <div class="pill" id="unitName" style="font-size:14px"></div>
+  </div>
+  <div class="row"><span id="qKind">書く</span><span id="qUnit"></span></div>
+  <div id="qYomi"></div>
+  <div id="qNote"></div>
+  <div id="padArea"><div id="pad"></div></div>
+  <div class="row" id="tools">
+    <button id="undoBtn">↩ もどす</button>
+    <button id="clearBtn">🧽 ぜんぶけす</button>
+    <button id="hintBtn">💡 ヒント（書き順アニメ）</button>
+  </div>
+  <button class="main" id="judgeBtn">できた!</button>
+  <div class="card" id="resultCard" hidden>
+    <div id="verdict"></div>
+    <div id="medal" hidden></div>
+    <div id="medalNote"></div>
+    <ul id="msgs"></ul>
+    <div class="row" style="margin-top:10px">
+      <button class="retry" id="retryBtn">🎬 お手本を見て 書きなおす</button>
+      <button class="go" id="nextBtn">つぎへ ▶</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 結果 ===== -->
+<section id="summary" class="screen">
+  <h1 id="sumTitle">けっか</h1>
+  <div id="sumScore"></div>
+  <div id="sumSub" style="font-weight:900;font-size:18px"></div>
+  <div id="sumList"></div>
+  <p class="note" style="margin:0">⭕ 1回目で正解　🔺 書きなおしで正解　❌ まちがい</p>
+  <div class="row">
+    <button class="retry" id="sumRetry">❌ まちがえた問題だけ もう一度</button>
+    <button class="go" id="sumAgain">🔁 もう一度ぜんぶ</button>
+    <button id="sumHome">🏠 単元えらびへ</button>
+  </div>
+</section>
+
+<script src="data/tests-g5-t2.js"></script>
+<script src="js/kanji-data.js"></script>
+<script src="js/judge.js"></script>
+<script src="js/pad.js"></script>
+<script src="js/score-game.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const TESTS = window.KANJI_TESTS;
+const KEY = 'kanjiTest.v1';
+
+/* ===== 保存（単元ごとの記録と設定） ===== */
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+const store = Object.assign({ opt: { read: 0, shuffle: 0 }, units: {} }, load());
+function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+
+/* ===== 画面 ===== */
+function show(id) { $$('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
+
+function renderHome() {
+  $$('[data-opt]').forEach(b => b.classList.toggle('on', +b.dataset.val === store.opt[b.dataset.opt]));
+  const box = $('#units'); box.innerHTML = '';
+  // 🎲 ぜんぶの単元からシャッフル
+  const all = allUnit(), aw = all.items.filter(i => store.opt.read || i.kind === 'write').length, arec = store.units.all;
+  const ab = document.createElement('div'); ab.className = 'unit all';
+  ab.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${aw}問からランダムに出題</span>` +
+    (arec ? `<span class="rec">前回 ${arec.last.ok}/${arec.last.total} 正解（${arec.last.date}）</span>` : '') +
+    `<div class="cnt"><button data-n="10">10問</button><button data-n="20">20問</button><button data-n="0">ぜんぶ（${aw}問）</button></div>`;
+  ab.querySelectorAll('[data-n]').forEach(b => b.onclick = () => startUnit(all, null, +b.dataset.n));
+  box.appendChild(ab);
+  for (const u of TESTS.units) {
+    const w = u.items.filter(i => i.kind === 'write').length, r = u.items.length - w;
+    const rec = store.units[u.id];
+    const b = document.createElement('button'); b.className = 'unit';
+    b.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` +
+      (rec ? `<span class="rec">前回 ${rec.last.ok}/${rec.last.total} 正解（${rec.last.date}）・最高 ${rec.best.ok}/${rec.best.total}</span>` : '<span class="meta">まだ やっていない</span>');
+    b.onclick = () => startUnit(u);
+    box.appendChild(b);
+  }
+  const t = ScoreGame.totals();
+  $('#totals').textContent = `🥇${t.gold}　🥈${t.silver}　🥉${t.bronze}`;
+  $('#srcNote').textContent = `出題データ: ${TESTS.source}`;
+}
+$$('[data-opt]').forEach(b => b.onclick = () => { store.opt[b.dataset.opt] = +b.dataset.val; save(); renderHome(); });
+
+// 全単元をまとめた仮の単元（問題には元の単元名をつけておく）
+function allUnit() {
+  return { id: 'all', name: '🎲 ぜんぶの単元から', items: TESTS.units.flatMap(u => u.items.map(i => Object.assign({ unit: u.name }, i))) };
+}
+
+/* ===== ヒント文: 答えの漢字が入っていたら、よみがなに置きかえる ===== */
+function maskNote(note, word, yomi) {
+  if (!note) return '';
+  let h = esc(note);
+  const mark = `<mark>${esc(yomi)}</mark>`;
+  if (note.includes(word)) h = h.split(esc(word)).join(mark);
+  else {
+    const kanji = [...word].filter(KanjiData.isKanji).join('');
+    if (kanji && note.includes(kanji)) h = h.split(esc(kanji)).join(mark);
+  }
+  for (const ch of word) if (KanjiData.isKanji(ch)) h = h.split(ch).join('〇');   // 残った答えの字はかくす
+  return 'ヒント：' + h;
+}
+
+/* ===== 出題 ===== */
+let S = null;   // { unit, list, idx, results[], attempt, assisted, tmpls, judged }
+const pad = new WritingPad($('#pad'), { penMode: 'auto' });
+
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+// count: ぜんぶの単元からシャッフルのときの問題数（0 = ぜんぶ）
+function startUnit(u, onlyItems, count = 0) {
+  let list = onlyItems || u.items.filter(i => store.opt.read || i.kind === 'write');
+  if (!onlyItems && (store.opt.shuffle || u.id === 'all')) list = shuffle(list);
+  if (!onlyItems && count) list = list.slice(0, count);
+  S = { unit: u, list, idx: 0, results: [], retryRound: !!onlyItems, count };
+  $('#unitName').textContent = u.name;
+  show('play');
+  loadQ();
+}
+async function loadQ() {
+  const it = S.list[S.idx];
+  S.attempt = 0; S.assisted = false; S.judged = false;
+  $('#prog').textContent = `${S.idx + 1} / ${S.list.length}`;
+  $('#qKind').textContent = it.kind === 'write' ? `書く ${it.n}` : `読む ${it.n}`;
+  $('#qKind').className = it.kind;
+  $('#qYomi').textContent = it.yomi;
+  $('#qUnit').textContent = it.unit || '';
+  $('#qNote').innerHTML = maskNote(it.note, it.word, it.yomi);
+  $('#resultCard').hidden = true; $('#judgeBtn').hidden = false; $('#tools').hidden = false;
+  $('#hintBtn').classList.remove('on');
+  const segs = KanjiData.parseWord(it.word);
+  const kanji = segs.filter(s => s.type === 'kanji').map(s => s.ch);
+  S.tmpls = await Promise.all(kanji.map(ch => KanjiData.get(ch).catch(() => null)));
+  pad.setWord(segs, S.tmpls);
+}
+function judge() {
+  if (!S || S.tmpls.some(t => !t) || !pad.strokes.length) return;
+  pad.stopModel();
+  const it = S.list[S.idx];
+  const { strokes } = pad.strokesByCell();
+  const r = KanjiJudge.judgeWord(strokes, S.tmpls.map(t => t.lines), { tolerance: 'normal' });
+  pad.showResult(r);
+  S.attempt++; S.judged = true;
+  const res = S.results[S.idx] || (S.results[S.idx] = { item: it });
+  if (S.attempt === 1) { res.firstOk = r.ok; res.score = r.ok ? r.score : null; res.assisted = S.assisted; }
+  else if (r.ok) res.fixed = true;
+
+  const kanji = [...it.word].filter(KanjiData.isKanji);
+  const msgs = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
+  $('#verdict').className = r.ok ? 'ok' : 'ng';
+  $('#verdict').textContent = r.ok ? (S.attempt === 1 ? '⭕ 正解!' : '⭕ 書きなおし できたね!') : '❌ ざんねん';
+  const ul = $('#msgs'); ul.innerHTML = '';
+  for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
+  showMedal(r.ok && S.attempt === 1 ? ScoreGame.record(it.word, r, { assisted: S.assisted }) : { counted: false, reason: r.ok ? 'retry' : 'ng' });
+  $('#retryBtn').hidden = r.ok;
+  $('#nextBtn').textContent = S.idx + 1 < S.list.length ? 'つぎへ ▶' : 'けっかを見る ▶';
+  $('#resultCard').hidden = false; $('#judgeBtn').hidden = true; $('#tools').hidden = true;
+  setTimeout(() => $('#resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+}
+function showMedal(g) {
+  const m = $('#medal'), note = $('#medalNote');
+  m.hidden = true; note.textContent = ''; note.className = '';
+  if (!g.counted) {
+    if (g.reason === 'assisted') note.textContent = '💡 ヒントを見たので、今回は点数なし';
+    return;
+  }
+  m.className = g.rank.id; m.hidden = false;
+  m.innerHTML = `<span class="em">${g.rank.emoji}</span><span class="sc">${g.score}%<small>お手本との一致率</small></span><span class="lb">${g.rank.label}</span>`;
+  if (g.newBest) { note.textContent = `🎉 自己ベスト更新!（${g.prevBest}% → ${g.score}%）`; note.className = 'best'; }
+  else if (!g.first) note.textContent = `自己ベスト ${g.best}%`;
+}
+// ❌のあと: お手本アニメを見てから、もう一度書く
+function retry() {
+  pad.clear(); S.assisted = true; S.judged = false;
+  $('#resultCard').hidden = true; $('#judgeBtn').hidden = false; $('#tools').hidden = false;
+  pad.animateModel();
+}
+function next() {
+  if (S.idx + 1 < S.list.length) { S.idx++; loadQ(); }
+  else finish();
+}
+
+/* ===== 結果 ===== */
+function finish() {
+  const total = S.list.length;
+  const ok = S.results.filter(r => r && r.firstOk).length;
+  const scored = S.results.filter(r => r && r.firstOk && !r.assisted && r.score != null);
+  const avg = scored.length ? Math.round(scored.reduce((a, r) => a + r.score, 0) / scored.length) : null;
+  $('#sumTitle').textContent = `${S.unit.name}${S.retryRound ? '（なおし）' : ''}`;
+  $('#sumScore').innerHTML = `${ok}<small> / ${total} 正解</small>`;
+  $('#sumSub').textContent = (ok === total ? '🎉 ぜんぶ正解! ' : '') + (avg != null ? `一致率の平均 ${avg}%` : '');
+  const box = $('#sumList'); box.innerHTML = '';
+  S.list.forEach((it, i) => {
+    const r = S.results[i] || {};
+    const d = document.createElement('div'); d.className = 'si';
+    d.innerHTML = `<div><div class="w">${esc(it.word)}</div><div class="y">${esc(it.yomi)}</div></div><div class="r">${r.firstOk ? '⭕' : r.fixed ? '🔺' : '❌'}</div>`;
+    box.appendChild(d);
+  });
+  const wrong = S.list.filter((_, i) => !(S.results[i] && S.results[i].firstOk));
+  $('#sumRetry').hidden = !wrong.length;
+  $('#sumRetry').onclick = () => startUnit(S.unit, wrong);
+  if (!S.retryRound) {   // 単元の記録（なおしの回は記録しない）
+    const date = new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+    const rec = store.units[S.unit.id] || { best: { ok: 0, total } };
+    rec.last = { ok, total, date };
+    if (ok / total >= rec.best.ok / (rec.best.total || 1)) rec.best = { ok, total };
+    store.units[S.unit.id] = rec; save();
+  }
+  show('summary');
+}
+
+/* ===== ボタン ===== */
+$('#undoBtn').onclick = () => pad.undo();
+$('#clearBtn').onclick = () => pad.clear();
+$('#hintBtn').onclick = () => {
+  if (pad.animating) { pad.stopModel(); $('#hintBtn').classList.remove('on'); return; }
+  S.assisted = true; $('#hintBtn').classList.add('on');
+  pad.animateModel({ onDone: () => $('#hintBtn').classList.remove('on') });
+};
+$('#judgeBtn').onclick = judge;
+$('#retryBtn').onclick = retry;
+$('#nextBtn').onclick = next;
+$('#quitBtn').onclick = () => { if (confirm('れんしゅうを やめる？')) { S = null; renderHome(); show('home'); } };
+$('#sumAgain').onclick = () => startUnit(S.unit, null, S.count);
+$('#sumHome').onclick = () => { renderHome(); show('home'); };
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if ($('#play').classList.contains('on')) pad.layout(); }, 200); });
+
+window.__practice = { pad, get S() { return S; }, startUnit, judge, maskNote };
+renderHome();
+</script>
+</body>
+</html>

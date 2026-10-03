@@ -2,3 +2,6 @@
 # 内部資料（公開しない）
 Evidence-Based Kanji App Design.md
 Kanji App Spec.md
+
+# 先生用の元データ（アプリには data/tests-*.js として変換済み）
+*.xlsx
