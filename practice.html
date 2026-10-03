@@ -159,7 +159,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
     <div class="pill" id="prog" hidden></div>
   </div>
   <div id="feverBox">
-    <div id="feverHint">一致率 90%以上で 🔥FEVER!</div>
+    <div id="feverHint">一致率 80%以上で 🔥FEVER!</div>
     <div id="feverBadge" hidden>🔥 FEVER ×1</div>
     <div id="feverBar" hidden><i></i></div>
   </div>
@@ -235,8 +235,9 @@ const KEY = 'kanjiTest.v1';
 const RULE = {
   time: 180000,          // 3分
   base: 100,             // 1字あたりの基本点
-  silver: 80, gold: 90,  // 一致率のしきい値
-  feverTime: 20000,      // フィーバーの長さ（90%以上で20秒に戻る）
+  silver: 80, gold: 90,  // 一致率のしきい値（得点倍率 ×2 / ×3）
+  feverAt: 80,           // この一致率以上で FEVER 開始・倍率アップ
+  feverTime: 20000,      // フィーバーの長さ（feverAt 以上で20秒に戻る）
   feverMax: 5,           // フィーバー倍率の上限
   missGap: 3,            // 間違えた語を何問後にもう一度出すか
   tolerance: 'easy',     // 判定のきびしさ（easy / normal / strict）
@@ -285,7 +286,7 @@ function renderHome() {
   const ch = store.opt.mode === 'challenge';
   $('#orderRow').hidden = ch;
   $('#rules').innerHTML = ch
-    ? `<li>3分間で何点とれるか! 手本なしで書こう</li><li>正解で 1字100点。一致率 80%以上で ×2、90%以上で ×3</li><li>90%以上で 🔥FEVER（20秒）。FEVER中にまた90%以上で 倍率アップ!（最大×${RULE.feverMax}）</li><li>まちがえると FEVER終了。見なおしの間は タイマーが止まるよ</li>`
+    ? `<li>3分間で何点とれるか! 手本なしで書こう</li><li>正解で 1字100点。一致率 80%以上で ×2、90%以上で ×3</li><li>${RULE.feverAt}%以上で 🔥FEVER（20秒）。FEVER中にまた${RULE.feverAt}%以上で 倍率アップ!（最大×${RULE.feverMax}）</li><li>まちがえると FEVER終了。見なおしの間は タイマーが止まるよ</li>`
     : `<li>時間制限なし。1問ずつ じっくり書こう</li><li>まちがえたら お手本を見て 書きなおし</li>`;
   // 単元カード: 押すと「選択」→ 下の スタート! で始める
   const box = $('#units'); box.innerHTML = '';
@@ -448,15 +449,15 @@ function judgeChallenge() {
     const pct = r.score;
     const rankMult = pct >= RULE.gold ? 3 : pct >= RULE.silver ? 2 : 1;
     let feverStart = false, feverUp = false;
-    if (pct >= RULE.gold) {
+    if (pct >= RULE.feverAt) {
       if (C.fever) { if (C.mult < RULE.feverMax) { C.mult++; feverUp = true; } }
       else { C.mult = 1; feverStart = true; }
       C.feverLeft = RULE.feverTime;
       setFever(true);
-      C.gold++;
     }
     const fm = C.fever ? C.mult : 1;
     const pts = RULE.base * n * rankMult * fm;
+    if (pct >= RULE.gold) C.gold++;
     C.score += pts; C.ok++; C.maxMult = Math.max(C.maxMult, C.fever ? C.mult : 0);
     C.log.push({ item: it, ok: true, pct, pts });
     ScoreGame.record(it.word, r, {});
