@@ -120,15 +120,101 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 .si .y{font-size:13px;color:var(--muted)}
 .si .r{margin-left:auto;font-size:18px;font-weight:900;text-align:right}
 .note{font-size:12px;color:var(--muted)}
+
+/* ================= ドーパミン演出（見た目） ================= */
+@keyframes fxFlash{from{opacity:.75}to{opacity:0}}
+.fx-shake{animation:fxShake .45s}
+@keyframes fxShake{20%{transform:translate(-8px,3px) rotate(-1deg)}40%{transform:translate(7px,-3px) rotate(1deg)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-1px)}}
+.fx-boing{animation:fxBoing .5s cubic-bezier(.3,1.8,.5,1)}
+@keyframes fxBoing{30%{transform:scale(1.06)}60%{transform:scale(.97)}}
+.fx-fly{position:fixed;z-index:31;pointer-events:none;font-weight:900;font-size:40px;color:#fff;-webkit-text-stroke:2px #ff3b6b;paint-order:stroke fill;
+  transform:translate(0,0);transition:transform .7s cubic-bezier(.5,-0.4,.7,1),opacity .7s;margin:-24px 0 0 -40px;white-space:nowrap}
+
+/* 背景: ふわふわ浮かぶ漢字 */
+#floaters{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+#floaters span{position:absolute;bottom:-80px;font-family:"Klee One",serif;font-weight:600;color:#ffffff99;text-shadow:0 2px 8px #0001;animation:floatUp linear infinite}
+@keyframes floatUp{to{transform:translateY(-120vh) rotate(25deg)}}
+body.fever #floaters span{color:#fffa}
+
+/* タイトル */
+.title{margin:18px 0 0;font-size:clamp(40px,8vw,72px);font-weight:900;line-height:1.1;text-align:center;letter-spacing:.02em}
+.title span{display:inline-block;animation:tBounce 1.8s ease-in-out infinite;color:#fff;
+  -webkit-text-stroke:3px var(--c);paint-order:stroke fill;text-shadow:0 6px 0 var(--c),0 10px 18px #0003}
+@keyframes tBounce{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-12px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}}
+.subtitle{font-weight:900;font-size:18px;color:#fff;background:linear-gradient(90deg,#ff3b6b,#a855f7,#3b9cff);border-radius:999px;padding:4px 18px;box-shadow:0 4px 0 #0002}
+#totals{font-size:22px;background:#fffc;border-radius:999px;padding:4px 18px;box-shadow:0 3px 0 #0001}
+
+/* 単元カード */
+#units{gap:16px}
+.unit{border:0;background:linear-gradient(145deg,var(--u1,#fff),var(--u2,#fff));color:var(--ink);position:relative;overflow:hidden;
+  box-shadow:0 6px 0 var(--u3,#0002),0 10px 20px #0002;animation:cardIn .5s cubic-bezier(.2,1.5,.4,1) both;padding-left:84px;min-height:110px;justify-content:center}
+.unit::before{content:var(--emo,"📘");position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:52px;filter:drop-shadow(0 4px 0 #0002);transition:transform .3s}
+.unit:hover::before{transform:translateY(-50%) rotate(-12deg) scale(1.1)}
+.unit::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#fff8 45%,transparent 60%);transform:translateX(-120%);pointer-events:none}
+.unit.sel{transform:translateY(-4px) scale(1.02);box-shadow:0 6px 0 var(--u3,#0002),0 0 0 5px #fff,0 0 0 9px var(--pink),0 14px 30px #ff3b6b55}
+.unit.sel::after{animation:shine 1.6s ease-in-out infinite}
+.unit.sel::before{animation:emoWiggle 1s ease-in-out infinite}
+@keyframes emoWiggle{50%{transform:translateY(-50%) rotate(12deg) scale(1.15)}}
+@keyframes shine{to{transform:translateX(120%)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(.9)}}
+.unit .rec{color:#15803d}
+
+/* スタートボタン */
+#startBtn{position:relative;overflow:hidden;font-size:34px;padding:16px 70px;border-radius:999px;
+  background:linear-gradient(180deg,#ff7aa2,#ff3b6b 55%,#e11d48);box-shadow:0 8px 0 #9f1239,0 0 0 6px #fff,0 0 40px #ff3b6b99;animation:startPulse 1.2s ease-in-out infinite}
+#startBtn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#fff9 45%,transparent 60%);animation:shine 2s ease-in-out infinite;pointer-events:none}
+#startBtn:active{transform:translateY(6px);box-shadow:0 2px 0 #9f1239,0 0 0 6px #fff}
+@keyframes startPulse{50%{transform:scale(1.05);box-shadow:0 8px 0 #9f1239,0 0 0 6px #fff,0 0 70px #ff3b6bcc}}
+
+.card{border-radius:24px}
+button.on{background:linear-gradient(180deg,#c084fc,#7c3aed);box-shadow:0 3px 0 #4c1d95}
+
+/* カウントダウン */
+#countdown{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:#0005;pointer-events:none}
+#countdown span{font-size:min(40vw,260px);font-weight:900;color:#fff;-webkit-text-stroke:8px #ff3b6b;paint-order:stroke fill;text-shadow:0 14px 0 #9f1239;animation:cdPop .9s cubic-bezier(.2,1.6,.4,1) forwards}
+#countdown span.go{font-size:min(18vw,140px);-webkit-text-stroke:6px #f59e0b;text-shadow:0 10px 0 #b45309}
+@keyframes cdPop{0%{transform:scale(2.5);opacity:0}30%{transform:scale(1);opacity:1}80%{opacity:1}100%{transform:scale(.6);opacity:0}}
+
+/* HUD */
+#timer{background:#1f2a44;color:#fff;font-size:32px;box-shadow:0 4px 0 #0005;border:3px solid #fff}
+#timer::before{content:"⏱ ";font-size:24px}
+#timer.paused{color:#94a3b8}
+#timer.low{background:#dc2626;color:#fff;animation:blink .5s steps(2) infinite}
+#score{background:linear-gradient(180deg,#fff7c2,#fde047);color:#7a3e00;border:3px solid #fff;box-shadow:0 4px 0 #b45309;font-size:36px;min-width:150px;text-align:center}
+#score::before{content:"⭐ "}
+#combo{height:30px;font-size:24px;font-weight:900;color:#fff;-webkit-text-stroke:2px #ff3b6b;paint-order:stroke fill;text-align:center}
+#combo.bump{animation:bump .4s}
+body.lowtime::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 120px #dc262688;animation:blink 1s infinite}
+
+/* 問題 */
+#qYomi{color:#fff;-webkit-text-stroke:3px #1f2a44;paint-order:stroke fill;text-shadow:0 6px 0 #1f2a44aa;font-size:clamp(40px,7vw,64px);animation:yomiIn .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes yomiIn{from{transform:scale(.4) rotate(-6deg);opacity:0}}
+
+/* FEVER */
+body.fever::before{content:"";position:fixed;left:50%;top:50%;width:250vmax;height:250vmax;margin:-125vmax 0 0 -125vmax;z-index:-1;pointer-events:none;
+  background:repeating-conic-gradient(#ffffff26 0 8deg,transparent 8deg 20deg);animation:rays 6s linear infinite}
+@keyframes rays{to{transform:rotate(360deg)}}
+#feverBadge{font-size:30px;padding:4px 22px;border:3px solid #fff}
+#feverBar{height:18px;border:3px solid #fff;box-shadow:0 0 14px #f59e0b}
+#feverHint{font-size:17px}
+
+/* 結果 */
+#sumScore{color:#fff;-webkit-text-stroke:5px #ff3b6b;paint-order:stroke fill;text-shadow:0 10px 0 #9f1239;font-size:clamp(64px,14vw,120px)}
+#sumScore small{-webkit-text-stroke:3px #ff3b6b;color:#fff}
+#sumRank{font-size:30px;font-weight:900;color:#fff;background:linear-gradient(90deg,#f43f5e,#f59e0b,#a855f7);padding:6px 26px;border-radius:999px;box-shadow:0 5px 0 #0003;animation:pop .8s cubic-bezier(.2,1.6,.4,1)}
+#sumStats div{animation:cardIn .5s both}
+.si{animation:cardIn .4s both}
 </style>
 </head>
 <body>
 <div id="bg"></div>
+<div id="floaters"></div>
 <div class="corner"><button id="soundBtn">🔊</button></div>
 
 <!-- ===== ホーム ===== -->
 <section id="home" class="screen on">
-  <h1>✍ 漢字チャレンジ</h1>
+  <h1 class="title" id="title"></h1>
+  <div class="subtitle">⏱ 3分で何点とれる？</div>
   <div id="totals"></div>
   <div class="card">
     <div class="row">モード：
@@ -166,6 +252,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
     <div id="feverBadge" hidden>🔥 FEVER ×1</div>
     <div id="feverBar" hidden><i></i></div>
   </div>
+  <div id="combo"></div>
   <div id="qHead"><span id="qKind">書く</span><span id="qUnit"></span></div>
   <div id="qYomi"></div>
   <div id="qNote"></div>
@@ -209,6 +296,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 <section id="summary" class="screen">
   <h1 id="sumTitle">けっか</h1>
   <div id="sumScore"></div>
+  <div id="sumRank" hidden></div>
   <div id="sumBest"></div>
   <div id="sumStats"></div>
   <div id="sumList"></div>
@@ -221,14 +309,16 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 </section>
 
 <div id="bigText"></div>
+<div id="countdown" hidden></div>
 <div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
   <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
-<script src="data/tests-g5-t2.js?v=20261004d"></script>
-<script src="js/kanji-data.js?v=20261004d"></script>
-<script src="js/judge.js?v=20261004d"></script>
-<script src="js/pad.js?v=20261004d"></script>
-<script src="js/score-game.js?v=20261004d"></script>
+<script src="data/tests-g5-t2.js?v=20261004e"></script>
+<script src="js/kanji-data.js?v=20261004e"></script>
+<script src="js/judge.js?v=20261004e"></script>
+<script src="js/pad.js?v=20261004e"></script>
+<script src="js/score-game.js?v=20261004e"></script>
+<script src="js/fx.js?v=20261004e"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -285,6 +375,22 @@ function allUnit() {
 }
 const poolOf = u => u.items.filter(i => store.opt.read || i.kind === 'write');
 
+// タイトル（1文字ずつ色ちがいで はねる）と、背景にふわふわ浮かぶ漢字
+(function () {
+  const cols = ['#ff3b6b', '#ff8a00', '#eab308', '#22c55e', '#3b9cff', '#a855f7', '#ff6ec7'];
+  $('#title').innerHTML = [...'漢字チャレンジ'].map((ch, i) => `<span style="--c:${cols[i % cols.length]};animation-delay:${i * .12}s">${ch}</span>`).join('');
+  const ks = [...new Set([...TESTS.units.flatMap(u => u.items.map(i => i.word)).join('')].filter(KanjiData.isKanji))];
+  $('#floaters').innerHTML = Array.from({ length: 22 }, () => {
+    const ch = ks[Math.floor(Math.random() * ks.length)];
+    return `<span style="left:${Math.random() * 100}%;font-size:${30 + Math.random() * 60}px;animation-duration:${14 + Math.random() * 18}s;animation-delay:${-Math.random() * 30}s">${ch}</span>`;
+  }).join('');
+})();
+// 単元ごとの色と絵文字
+const UNIT_LOOK = {
+  all: ['#fff1f2', '#fde68a', '#f59e0b', '🎲'],
+  u1: ['#ecfdf5', '#a7f3d0', '#059669', '🪿'], u2: ['#eff6ff', '#bfdbfe', '#2563eb', '🤖'], u3: ['#f0fdf4', '#bbf7d0', '#15803d', '🌲'],
+  u4: ['#fdf4ff', '#f5d0fe', '#a21caf', '📜'], u5: ['#fff7ed', '#fed7aa', '#ea580c', '💪'], u6: ['#f0f9ff', '#e0f2fe', '#0284c7', '❄️'],
+};
 function renderHome() {
   $$('[data-opt]').forEach(b => b.classList.toggle('on', String(store.opt[b.dataset.opt]) === b.dataset.val));
   $('#soundBtn').textContent = store.opt.sound ? '🔊' : '🔇';
@@ -302,15 +408,17 @@ function renderHome() {
     const el = document.createElement('div');
     el.className = 'unit' + (isAll ? ' all' : '') + (u.id === store.opt.sel ? ' sel' : '');
     el.setAttribute('role', 'button');
+    const lk = UNIT_LOOK[u.id] || ['#fff', '#f1f5f9', '#94a3b8', '📘'];
+    el.style.cssText = `--u1:${lk[0]};--u2:${lk[1]};--u3:${lk[2]};--emo:"${lk[3]}";animation-delay:${cards.findIndex(c => c.u === u) * .06}s`;
     if (isAll) {
-      el.innerHTML = `<b>🎲 ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${an}問からランダムに出題</span>` + recLine('all') +
+      el.innerHTML = `<b>ぜんぶの単元から シャッフル</b><span class="meta">${TESTS.units.length}単元・${an}問からランダムに出題</span>` + recLine('all') +
         (ch ? '' : `<div class="cnt">${[10, 20, 0].map(n => `<button data-n="${n}" class="${store.opt.count === n ? 'on' : ''}">${n ? n + '問' : `ぜんぶ（${an}問）`}</button>`).join('')}</div>`);
       el.querySelectorAll('[data-n]').forEach(b => b.onclick = e => { e.stopPropagation(); store.opt.count = +b.dataset.n; store.opt.sel = 'all'; save(); renderHome(); });
     } else {
       const w = u.items.filter(i => i.kind === 'write').length, r = u.items.length - w;
       el.innerHTML = `<b>${esc(u.name)}</b><span class="meta">書く ${w}問・読む ${r}問</span>` + recLine(u.id);
     }
-    el.onclick = () => { store.opt.sel = u.id; save(); renderHome(); };
+    el.onclick = () => { store.opt.sel = u.id; save(); renderHome(); tone(880, 0, .08, 'triangle', .1); tone(1320, .05, .1, 'triangle', .08); };
     box.appendChild(el);
   }
   const selU = cards.find(c => c.u.id === store.opt.sel).u;
@@ -426,11 +534,27 @@ function startChallenge(u) {
   $('#hud').querySelector('#prog').hidden = true;
   $('#timer').hidden = $('#score').hidden = $('#feverBox').hidden = false;
   $('#hintBtn').hidden = true;                    // チャレンジ中はヒントなし
-  $('#score').textContent = '0';
+  $('#score').textContent = '0'; showCombo(0);
   setFever(false);
   show('play');
   const run = C;
-  nextChallenge().then(() => { if (C !== run) return; bigText('スタート!'); resume(); });
+  nextChallenge().then(() => countdown(run)).then(ok => { if (ok && C === run) resume(); });
+}
+// 3・2・1・スタート!
+function countdown(run) {
+  return new Promise(res => {
+    const box = $('#countdown'); box.hidden = false;
+    const steps = ['3', '2', '1', 'スタート!'];
+    let i = 0;
+    const tick = () => {
+      if (C !== run) { box.hidden = true; return res(false); }
+      if (i >= steps.length) { box.hidden = true; return res(true); }
+      box.innerHTML = `<span class="${i === 3 ? 'go' : ''}">${steps[i]}</span>`;
+      if (i < 3) tone(660, 0, .15, 'square', .08); else { [784, 1047, 1319].forEach((f, k) => tone(f, k * .06, .25, 'square', .08)); FX.confetti(80); }
+      i++; setTimeout(tick, i === 4 ? 600 : 750);
+    };
+    tick();
+  });
 }
 // 次の語: 間違えた語の再出題 → 山札（一巡するまで同じ語は出さない）
 function drawItem() {
@@ -463,6 +587,7 @@ function drawTimer() {
   const s = Math.max(0, Math.ceil(C.left / 1000));
   $('#timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   $('#timer').classList.toggle('low', s <= 10);
+  document.body.classList.toggle('lowtime', s <= 10 && s > 0 && C.running);
   if (s <= 10 && s !== lastSec && s > 0) SFX.tick();
   lastSec = s;
   if (C.fever) $('#feverBar i').style.width = Math.max(0, C.feverLeft / RULE.feverTime * 100) + '%';
@@ -496,7 +621,10 @@ function judgeChallenge() {
     C.log.push({ item: it, ok: true, pct, pts });
     ScoreGame.record(it.word, r, {});
     // 演出
-    const sc = $('#score'); sc.textContent = C.score.toLocaleString(); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump');
+    const sc = $('#score');
+    C.combo = (C.combo || 0) + 1;
+    celebrate(pct, fm, pts, feverStart || feverUp);
+    setTimeout(() => { FX.countUp(sc, C.score, 500); sc.classList.remove('bump'); void sc.offsetWidth; sc.classList.add('bump'); }, 450);
     const mtxt = [rankMult > 1 ? `一致率 ${pct}% ×${rankMult}` : `一致率 ${pct}%`, fm > 1 ? `FEVER ×${fm}` : ''].filter(Boolean).join('　');
     $('#pop').innerHTML = `<div class="pts">+${pts.toLocaleString()}</div><div class="sub">${esc(mtxt)}</div>`;
     if (feverStart) { bigText('🔥 FEVER!'); SFX.fever(); }
@@ -507,7 +635,7 @@ function judgeChallenge() {
     setTimeout(() => { $('#pop').innerHTML = ''; if (C === run && !run.ended) nextChallenge(); }, 1000);
   } else {
     // ❌: 0点・FEVER終了・タイマー停止・見なおし
-    pause(); SFX.ng();
+    pause(); SFX.ng(); C.combo = 0; showCombo(0); FX.shake($('#padArea'));
     if (C.fever) setFever(false);
     C.ng++;
     C.log.push({ item: it, ok: false, pct: 0, pts: 0 });
@@ -520,11 +648,31 @@ function judgeChallenge() {
     setTimeout(() => $('#reviewCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
   }
 }
+// 正解の演出（一致率・倍率が高いほど派手に）
+function celebrate(pct, fm, pts, big) {
+  const padEl = $('#pad'), [x, y] = FX.center(padEl);
+  FX.shake(padEl, 'fx-boing');
+  FX.burst(x, y, 50 + fm * 25 + (pct >= 90 ? 40 : 0), 10 + fm * 2);
+  const fw = (pct >= 90 ? 2 : pct >= 80 ? 1 : 0) + (fm > 1 ? fm - 1 : 0);
+  for (let i = 0; i < fw; i++) setTimeout(() => { FX.firework(innerWidth * (.15 + Math.random() * .7), innerHeight * (.12 + Math.random() * .35)); tone(200 + Math.random() * 80, 0, .2, 'sine', .08); }, 150 + i * 170);
+  if (pct >= 90) FX.emoji(x, y, ['⭐', '✨', '🌟', '💯', '🎉'], 8 + fm * 2);
+  if (big) { FX.flash('#fff7c2'); FX.shake(document.body); FX.confetti(60 + fm * 20); }
+  setTimeout(() => FX.fly('+' + pts.toLocaleString(), padEl, $('#score')), 250);
+  showCombo(C.combo);
+}
+function showCombo(n) {
+  const el = $('#combo');
+  el.textContent = n >= 2 ? `${'🔥'.repeat(Math.min(n, 5))} ${n} れんぞく せいかい!` : '';
+  el.classList.remove('bump'); void el.offsetWidth; if (n >= 2) el.classList.add('bump');
+}
+// FEVER中は画面の端から火の粉
+setInterval(() => { if (C && C.fever && C.running) FX.sparks(5); }, 120);
+
 function endChallenge() {
   if (!C || C.ended) return;
   C.ended = true; C.running = false; C.left = 0; drawTimer();
   pad.locked = true; pad.stopModel();
-  setFever(false); SFX.end(); bigText('そこまで!');
+  setFever(false); SFX.end(); bigText('そこまで!'); document.body.classList.remove('lowtime'); FX.flash('#ffffff'); FX.shake(document.body);
   const run = C;
   setTimeout(() => { if (C === run) showChallengeResult(); }, 1400);
 }
@@ -534,7 +682,9 @@ function showChallengeResult() {
   const isBest = C.score > 0 && (!prev || C.score > prev.score);
   if (isBest) { store.best[key] = { score: C.score, date: new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) }; save(); }
   $('#sumTitle').textContent = `⏱ 3分チャレンジ ${C.unit.name}`;
-  $('#sumScore').innerHTML = `${C.score.toLocaleString()}<small> 点</small>`;
+  $('#sumScore').innerHTML = `<span id="sumNum">0</span><small> 点</small>`;
+  const rank = [[15000, '👑 漢字レジェンド'], [9000, '🏆 漢字マスター'], [5000, '🦸 漢字ヒーロー'], [2500, '⚔️ 漢字ファイター'], [1000, '🌱 漢字チャレンジャー'], [0, '🐣 漢字みならい']].find(r => C.score >= r[0])[1];
+  $('#sumRank').textContent = rank; $('#sumRank').hidden = true;
   const sb = $('#sumBest');
   sb.className = isBest ? 'new' : '';
   sb.textContent = isBest ? (prev ? `🎉 ハイスコア更新!（前の記録 ${prev.score.toLocaleString()}点）` : '🏆 はじめての記録!') : prev ? `ハイスコア ${prev.score.toLocaleString()}点` : '';
@@ -549,7 +699,19 @@ function showChallengeResult() {
   $('#sumRetry').hidden = true;
   $('#sumAgain').onclick = () => startChallenge(C.unit);
   show('summary');
-  if (isBest) { bigText(prev ? 'ハイスコア!' : 'きろく!'); SFX.fever(); }
+  // 点数をカウントアップ → 称号 → (ハイスコアなら) 紙吹雪と花火
+  FX.countUp($('#sumNum'), C.score, 1400, 0);
+  for (let i = 0; i < 14; i++) setTimeout(() => tone(500 + i * 40, 0, .05, 'square', .04), i * 90);
+  const run = C;
+  setTimeout(() => {
+    if (C !== run || !$('#summary').classList.contains('on')) return;
+    $('#sumRank').hidden = false; tone(1047, 0, .3, 'triangle', .12);
+    const [x, y] = FX.center($('#sumRank')); FX.burst(x, y, 80, 14);
+    if (isBest) {
+      bigText(prev ? 'ハイスコア!' : 'きろく!'); SFX.fever(); FX.confetti(220);
+      for (let i = 0; i < 6; i++) setTimeout(() => FX.firework(innerWidth * (.1 + Math.random() * .8), innerHeight * (.1 + Math.random() * .4), 90), i * 300);
+    }
+  }, 1500);
 }
 
 /* ================================================================
@@ -587,6 +749,7 @@ function judgeStudy() {
   fillList($('#msgs'), r.msgList);
   showMedal(r.ok && S.attempt === 1 ? ScoreGame.record(it.word, r, { assisted: S.assisted }) : { counted: false, reason: r.ok ? 'retry' : 'ng' });
   r.ok ? SFX.ok(1) : SFX.ng();
+  if (r.ok) { const [x, y] = FX.center($('#pad')); FX.burst(x, y, 60, 11); FX.shake($('#pad'), 'fx-boing'); if (r.score >= 90) FX.emoji(x, y, ['⭐', '✨', '💯'], 8); } else FX.shake($('#padArea'));
   $('#retryBtn').hidden = $('#stFlag').hidden = r.ok;
   $('#stFlag').disabled = false; $('#stFlag').textContent = '🙋 正しく書いたのに❌だった';
   $('#nextBtn').textContent = S.idx + 1 < S.list.length ? 'つぎへ ▶' : 'けっかを見る ▶';
@@ -606,6 +769,7 @@ function finishStudy() {
   const total = S.list.length, ok = S.results.filter(r => r && r.firstOk).length;
   const scored = S.results.filter(r => r && r.firstOk && !r.assisted && r.score != null);
   const avg = scored.length ? Math.round(scored.reduce((a, r) => a + r.score, 0) / scored.length) : null;
+  $('#sumRank').hidden = true;
   $('#sumTitle').textContent = `${S.unit.name}${S.retryRound ? '（なおし）' : ''}`;
   $('#sumScore').innerHTML = `${ok}<small> / ${total} 正解</small>`;
   $('#sumBest').className = ''; $('#sumBest').textContent = (ok === total ? '🎉 ぜんぶ正解! ' : '') + (avg != null ? `一致率の平均 ${avg}%` : '');
@@ -664,7 +828,7 @@ $('#quitBtn').onclick = () => {
   $('#dlgYes').onclick = () => {
     $('#dlg').hidden = true;
     pad.stopModel();
-    if (C) C.ended = true; C = null; S = null; setFever(false); $('#bigText').innerHTML = '';
+    if (C) C.ended = true; C = null; S = null; setFever(false); $('#bigText').innerHTML = ''; $('#countdown').hidden = true; document.body.classList.remove('lowtime'); showCombo(0);
     renderHome(); show('home');
   };
   $('#dlgNo').onclick = () => { $('#dlg').hidden = true; if (wasRunning) resume(); };
