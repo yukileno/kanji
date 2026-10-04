@@ -117,13 +117,21 @@
    * 形 85%: 各画のずれ（大きさ・位置をそろえた後）を点数化。書いていない画は0点、余分な画は割り引く
    * 配置 15%: マスの中での字の大きさ・位置がお手本に近いか
    * とめ・はね・はらいは含まない。 */
-  const SCORE_FULL = .015, SCORE_ZERO = .165;   // ずれがこの範囲で 100% → 0% に下がる
+  // 実際の手書きで 70%前後に集まりすぎたため、ゆるめに調整（2026-10-04）
+  //   ずれ SCORE_FULL 以下で満点、SCORE_ZERO で0点（SCORE_CURVE<1 にするとさらに高めに出る）
+  //   目安: ていねい≈99 / ふつう≈90 / やや雑≈84 / 雑≈72（旧設定では 95 / 83 / 76 / 62）
+  const SCORE_FULL = .025, SCORE_ZERO = .20, SCORE_CURVE = 1;
   function matchScore(user, tmplRaw, C, map, nU, nT) {
-    const sims = map.map((i, j) => i < 0 ? 0 : Math.min(1, Math.max(0, 1 - (C[i][j] - SCORE_FULL) / (SCORE_ZERO - SCORE_FULL))));
+    const sims = map.map((i, j) => {
+      if (i < 0) return 0;
+      const d = Math.min(1, Math.max(0, (C[i][j] - SCORE_FULL) / (SCORE_ZERO - SCORE_FULL)));
+      return 1 - Math.pow(d, 1 / SCORE_CURVE);
+    });
     const shape = sims.reduce((a, b) => a + b, 0) / nT * Math.min(1, nT / Math.max(nU, 1));
     const u = bbox(user), t = bbox(tmplRaw);
-    const sizePen = Math.min(1, Math.abs(Math.log(Math.max(u.w, u.h, 1e-3) / Math.max(t.w, t.h))) / Math.LN2);
-    const posPen = Math.min(1, Math.hypot(u.cx - t.cx, u.cy - t.cy) / .3);
+    // 配置: 大きさは 0.7〜1.4倍、位置は 0.08 までのずれなら減点なし
+    const sizePen = Math.min(1, Math.max(0, Math.abs(Math.log(Math.max(u.w, u.h, 1e-3) / Math.max(t.w, t.h))) - Math.log(1.4)) / Math.LN2);
+    const posPen = Math.min(1, Math.max(0, Math.hypot(u.cx - t.cx, u.cy - t.cy) - .08) / .3);
     const place = 1 - (sizePen + posPen) / 2;
     return Math.round(100 * (.85 * shape + .15 * place));
   }
