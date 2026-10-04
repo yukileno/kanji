@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="sprout" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="60%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </radialGradient>
+    <filter id="leafG" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="#052e16" stroke="#4ade80" stroke-width="3" filter="url(#leafG)"/>
+  <!-- 双葉 -->
+  <path d="M50 72 C50 56 46 44 32 40 C28 58 40 70 50 72 Z" fill="url(#sprout)"/>
+  <path d="M50 72 C50 56 54 44 68 40 C72 58 60 70 50 72 Z" fill="url(#sprout)"/>
+  <path d="M50 74 L50 46" stroke="#86efac" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- きらめき結晶 -->
+  <circle cx="50" cy="32" r="5" fill="#fef08a"/>
+  <path d="M50 20 L52 29 L60 30 L53 34 L55 42 L50 37 L45 42 L47 34 L40 30 L48 29 Z" fill="#ffffff" opacity="0.9"/>
+  <circle cx="28" cy="28" r="2.5" fill="#86efac"/>
+  <circle cx="72" cy="28" r="2.5" fill="#86efac"/>
+</svg>

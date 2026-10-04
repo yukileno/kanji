@@ -5,3 +5,7 @@ Kanji App Spec.md
 
 # 先生用の元データ（アプリには data/tests-*.js として変換済み）
 *.xlsx
+
+# 作業メモ・未使用の素材（公開しない）
+task.md
+assets/title_frame.webp

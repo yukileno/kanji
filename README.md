@@ -12,7 +12,9 @@
 - `js/judge.js` … 書き終わってからの正誤判定（画数・形・向き・書き順・長さ関係）と一致率
 - `js/pad.js` … ペンで書く枠
 - `js/kanji-data.js` … 字形・書き順データの読み込み
-- `js/fx.js` … 演出（紙吹雪・花火など）
+- `js/fx.js` … 演出（光・花火・紙吹雪など）
+- `js/sound.js` … 効果音とFEVER中のBGM（Web Audio API で合成）
+- `assets/` … 背景・単元イラスト・バッジ・称号エンブレムの画像
 - `data/tests-g5-t2.js` … 出題データ
 - `data/ja-*.js` … 字形・書き順データ
 
