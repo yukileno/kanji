@@ -147,6 +147,9 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
   </div>
   <div id="units"></div>
   <p class="note" id="srcNote"></p>
+  <div class="row note" style="gap:6px"><span id="logLine"></span>
+    <button id="logSave" style="font-size:13px;padding:6px 12px">⬇ 記録を保存</button>
+    <button id="logClear" style="font-size:13px;padding:6px 12px">記録を消す</button></div>
   <div id="startBar"><button class="main" id="startBtn">▶ スタート!<small id="startSel"></small></button></div>
 </section>
 
@@ -182,6 +185,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
     <ul id="msgs"></ul>
     <div class="row" style="margin-top:10px">
       <button class="retry" id="retryBtn">🎬 お手本を見て 書きなおす</button>
+      <button id="stFlag" style="font-size:14px">🙋 正しく書いたのに❌だった</button>
       <button class="go" id="nextBtn">つぎへ ▶</button>
     </div>
   </div>
@@ -194,6 +198,7 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
     <ul id="rvMsgs" style="margin:4px 0 0;padding-left:1.2em;font-weight:800;line-height:1.8;font-size:17px"></ul>
     <div class="row" style="margin-top:10px">
       <button id="rvAnim">🎬 正しい書き順</button>
+      <button id="rvFlag" style="font-size:14px">🙋 正しく書いたのに❌だった</button>
       <button id="rvReplay">▶ 自分の書き方</button>
       <button class="go" id="rvNext">つぎへ ▶（タイマー再開）</button>
     </div>
@@ -219,11 +224,11 @@ body.fever .wpad{box-shadow:0 8px 24px #0002,0 0 0 5px #fff,0 0 0 10px #fbbf24,0
 <div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
   <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
-<script src="data/tests-g5-t2.js?v=20261004b"></script>
-<script src="js/kanji-data.js?v=20261004b"></script>
-<script src="js/judge.js?v=20261004b"></script>
-<script src="js/pad.js?v=20261004b"></script>
-<script src="js/score-game.js?v=20261004b"></script>
+<script src="data/tests-g5-t2.js?v=20261004d"></script>
+<script src="js/kanji-data.js?v=20261004d"></script>
+<script src="js/judge.js?v=20261004d"></script>
+<script src="js/pad.js?v=20261004d"></script>
+<script src="js/score-game.js?v=20261004d"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -314,6 +319,7 @@ function renderHome() {
     if (ch) startChallenge(selU);
     else selU.id === 'all' ? startStudy(selU, null, store.opt.count) : startStudy(selU);
   };
+  renderLogLine();
   const t = ScoreGame.totals();
   $('#totals').textContent = `🥇${t.gold}　🥈${t.silver}　🥉${t.bronze}`;
   $('#srcNote').textContent = `出題データ: ${TESTS.source}`;
@@ -373,7 +379,35 @@ function judgeCurrent() {
   pad.showResult(r);
   const kanji = [...curItem.word].filter(KanjiData.isKanji);
   r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (kanji.length > 1 ? `「${kanji[k]}」 ` : '') + m));
+  logJudge(r);
   return r;
+}
+
+/* ===== 判定の記録（判定の厳しさを、実際の字で調整するため） =====
+ * 書いた線・判定・❌の理由・一致率を端末に保存（最新200件。容量が足りなければ古いものから減らす）。最初の画面の下から先生がファイルに保存できる。 */
+const JLOG = 'kanjiJudgeLog.v1', JLOG_MAX = 200;
+function loadJLog() { try { return JSON.parse(localStorage.getItem(JLOG)) || []; } catch (e) { return []; } }
+function saveJLog(l) {
+  for (let n = JLOG_MAX; n >= 10; n = Math.floor(n / 2)) {
+    try { localStorage.setItem(JLOG, JSON.stringify(l.slice(-n))); return; } catch (e) {}
+  }
+}
+function logJudge(r) {
+  const l = loadJLog();
+  l.push({ t: Date.now(), word: curItem.word, mode: MODE, tol: RULE.tolerance, ok: r.ok, score: r.score,
+    chars: r.chars.map(c => ({ ok: c.ok, score: c.score, reasons: c.reasons, cost: c.debug.map(d => +Math.min(d.cost, d.costRev).toFixed(3)) })),
+    strokes: pad.strokes.map(st => st.filter((p, i) => i % 2 === 0 || i === st.length - 1).map(p => [+p.x.toFixed(3), +p.y.toFixed(3)])), box: pad.box });   // 線は間引いて軽くする
+  saveJLog(l);
+}
+// 「正しく書いたのに❌」のしるし（点数には関係しない）
+function flagLast(btn) {
+  const l = loadJLog(); if (!l.length) return;
+  l[l.length - 1].flag = 'wrongNg'; saveJLog(l);
+  btn.disabled = true; btn.textContent = '🙏 教えてくれてありがとう';
+}
+function renderLogLine() {
+  const n = loadJLog().length, f = loadJLog().filter(x => x.flag).length;
+  $('#logLine').innerHTML = `先生用：判定の記録 ${n}件（「正しく書いたのに❌」${f}件）`;
 }
 function fillList(ul, msgs) { ul.innerHTML = ''; for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); } }
 
@@ -481,6 +515,7 @@ function judgeChallenge() {
     $('#rvAnswer').innerHTML = `こたえ：<span style="font-family:'Klee One',serif;font-size:30px">${esc(it.word)}</span>`;
     fillList($('#rvMsgs'), r.msgList);
     $('#judgeBtn').hidden = $('#tools').hidden = true;
+    $('#rvFlag').disabled = false; $('#rvFlag').textContent = '🙋 正しく書いたのに❌だった';
     $('#reviewCard').hidden = false;
     setTimeout(() => $('#reviewCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
   }
@@ -552,7 +587,8 @@ function judgeStudy() {
   fillList($('#msgs'), r.msgList);
   showMedal(r.ok && S.attempt === 1 ? ScoreGame.record(it.word, r, { assisted: S.assisted }) : { counted: false, reason: r.ok ? 'retry' : 'ng' });
   r.ok ? SFX.ok(1) : SFX.ng();
-  $('#retryBtn').hidden = r.ok;
+  $('#retryBtn').hidden = $('#stFlag').hidden = r.ok;
+  $('#stFlag').disabled = false; $('#stFlag').textContent = '🙋 正しく書いたのに❌だった';
   $('#nextBtn').textContent = S.idx + 1 < S.list.length ? 'つぎへ ▶' : 'けっかを見る ▶';
   $('#resultCard').hidden = false; $('#judgeBtn').hidden = $('#tools').hidden = true;
   setTimeout(() => $('#resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
@@ -614,6 +650,8 @@ $('#retryBtn').onclick = () => {
 };
 $('#nextBtn').onclick = () => { if (S.idx + 1 < S.list.length) { S.idx++; loadStudy(); } else finishStudy(); };
 // チャレンジの見なおし（タイマー停止中）
+$('#rvFlag').onclick = () => flagLast($('#rvFlag'));
+$('#stFlag').onclick = () => flagLast($('#stFlag'));
 $('#rvAnim').onclick = () => { pad.clearResult(); pad.animateModel(); };
 $('#rvReplay').onclick = () => { pad.stopModel(); pad.replay(); };
 $('#rvNext').onclick = () => { if (!C) return; pad.stopModel(); $('#reviewCard').hidden = true; const run = C; nextChallenge().then(() => { if (C === run) resume(); }); };
@@ -630,6 +668,18 @@ $('#quitBtn').onclick = () => {
     renderHome(); show('home');
   };
   $('#dlgNo').onclick = () => { $('#dlg').hidden = true; if (wasRunning) resume(); };
+};
+$('#logSave').onclick = () => {
+  const blob = new Blob([JSON.stringify({ app: 'kanji-practice', v: 1, saved: new Date().toISOString(), ua: navigator.userAgent, log: loadJLog() })], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `kanji-judge-log-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#logClear').onclick = () => {
+  $('#dlgMsg').textContent = '判定の記録を消す？'; $('#dlgSub').textContent = '（先に「記録を保存」をしておいてください）';
+  $('#dlgYes').textContent = '消す'; $('#dlg').hidden = false;
+  $('#dlgYes').onclick = () => { saveJLog([]); $('#dlg').hidden = true; $('#dlgYes').textContent = 'やめる'; renderLogLine(); };
+  $('#dlgNo').onclick = () => { $('#dlg').hidden = true; $('#dlgYes').textContent = 'やめる'; };
 };
 $('#sumHome').onclick = () => { renderHome(); show('home'); };
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if ($('#play').classList.contains('on')) pad.layout(); }, 200); });
