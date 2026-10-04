@@ -35,8 +35,11 @@
     }
     layout() {
       const units = this.segs.reduce((a, s) => a + (s.type === 'kanji' ? 1 : this._kanaW(s.text)), 0) || 1;
-      const avail = (this.wrap.parentElement || this.wrap).clientWidth - 12;
-      this.box = Math.floor(Math.max(this.opt.minBox, Math.min(avail / units, this.opt.maxBox)));
+      const parent = this.wrap.parentElement || this.wrap;
+      const avail = parent.clientWidth - 12;
+      // opt.fitHeight: 親要素の高さにも収める（スクロールなしの画面用）
+      const availH = this.opt.fitHeight && parent.clientHeight > 0 ? parent.clientHeight - 12 : Infinity;
+      this.box = Math.floor(Math.max(this.opt.minBox, Math.min(avail / units, availH, this.opt.maxBox)));
       let x = 0; this.cells = []; this.kana = [];
       for (const s of this.segs) {
         if (s.type === 'kanji') { this.cells.push({ x0: x, ch: s.ch }); x += 1; }
