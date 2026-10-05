@@ -901,12 +901,12 @@ button.retry {
 <div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
   <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
-<script src="data/tests-g5-t2.js?v=20261004i"></script>
-<script src="js/kanji-data.js?v=20261004i"></script>
-<script src="js/judge.js?v=20261004i"></script>
-<script src="js/pad.js?v=20261004i"></script>
-<script src="js/sound.js?v=20261004i"></script>
-<script src="js/fx.js?v=20261004i"></script>
+<script src="data/tests-g5-t2.js?v=20261005a"></script>
+<script src="js/kanji-data.js?v=20261005a"></script>
+<script src="js/judge.js?v=20261005a"></script>
+<script src="js/pad.js?v=20261005a"></script>
+<script src="js/sound.js?v=20261005a"></script>
+<script src="js/fx.js?v=20261005a"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -923,8 +923,12 @@ const RULE = {
   feverMax: 5,               // FEVER倍率の上限
   repeatRate: .5,            // 同じ日に同じ語をもう一度書いたときの点数の割合
   allCount: 20,              // 「ぜんぶの単元から」の問題数
-  tolerance: 'superEasy',    // 判定のきびしさ（superEasy=激甘 / easy / normal / strict）
+  tolerance: 'superEasy',    // 判定のきびしさ（ultraEasy=激激甘 / superEasy=激甘 / easy / normal / strict）
 };
+// 先生の確認用: index.html?judge=ultraEasy で判定のきびしさを切り替える（試験版）
+const JUDGE_PARAM = new URLSearchParams(location.search).get('judge');
+if (JUDGE_PARAM && KanjiJudge.LEVELS[JUDGE_PARAM]) RULE.tolerance = JUDGE_PARAM;
+const JUDGE_NAMES = { ultraEasy: '激激甘', superEasy: '激甘', easy: 'あまめ', normal: 'ふつう', strict: 'きびしめ' };
 
 // コース: かんたん・ふつう・むずかしい
 const COURSES = [
@@ -1143,7 +1147,7 @@ function startCourse(u, course) {
   if (!list.length) return;
   const n = list.length, req = need(n, course);
   R = { unit: u, course, list, idx: 0, n, req, ok: 0, ng: 0, pts: 0, streak: 0, maxStreak: 0, gold: 0, log: [], busy: false, ended: false };
-  $('#courseTag').textContent = `${course.medal} ${course.name}`;
+  $('#courseTag').textContent = `${course.medal} ${course.name}` + (JUDGE_PARAM ? `（判定：${JUDGE_NAMES[RULE.tolerance]}）` : '');
   $('#score').textContent = '0';
   setFever(1); drawHearts(); drawGoal(); drawStreak();
   show('play');

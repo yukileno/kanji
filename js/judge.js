@@ -5,7 +5,13 @@
 (function () {
   'use strict';
   const N = 32;                                            // 1画あたりのリサンプル点数
-  const LEVELS = { superEasy: .23, easy: .17, normal: .13, strict: .095 };   // superEasy=激甘（入/人・夫/天 は区別できなくなる） // 形のずれの許容量（字の大きさ=約0.8 に対する平均距離）
+  const LEVELS = { ultraEasy: .25, superEasy: .23, easy: .17, normal: .13, strict: .095 };   // superEasy=激甘（入/人・夫/天 は区別できなくなる） // 形のずれの許容量（字の大きさ=約0.8 に対する平均距離）
+  // ultraEasy=激激甘（先生の確認用の試験版）: 許容量を少し広げたうえで、線の長さを見ない
+  //   ・各画の長さが お手本の 0.4〜2.5倍 なら、長さをそろえてから形を比べる
+  //   ・長さ関係（土/士・未/末）のチェックをしない
+  //   ・字全体の縦横比のずれは 2倍まで吸収
+  //   画数・向き・書き順は きびしく判定する（形の許容量を広げても見のがさないよう、形とは別に調べる）
+  const LENGTH_FREE = { ultraEasy: { scale: 2.5, aspect: 2 } };
   const MAX_SHAPE_MSGS = 2;
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -30,18 +36,24 @@
     return { w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
   }
   // 書いた字をお手本の大きさ・位置にそろえる（縦横比のずれは1.5倍まで吸収）
-  function normalizeTo(user, tmpl) {
+  function normalizeTo(user, tmpl, aspect = 1.5) {
     const u = bbox(user), t = bbox(tmpl);
     const big = Math.max(t.w, t.h) / Math.max(u.w, u.h, 1e-3);
     let sx = u.w > .05 && t.w > .05 ? t.w / u.w : big;
     let sy = u.h > .05 && t.h > .05 ? t.h / u.h : big;
     const g = Math.sqrt(sx * sy);
-    sx = Math.min(Math.max(sx, g / 1.5), g * 1.5);
-    sy = Math.min(Math.max(sy, g / 1.5), g * 1.5);
+    sx = Math.min(Math.max(sx, g / aspect), g * aspect);
+    sy = Math.min(Math.max(sy, g / aspect), g * aspect);
     return user.map(s => s.map(p => ({ x: t.cx + (p.x - u.cx) * sx, y: t.cy + (p.y - u.cy) * sy })));
   }
   const meanDist = (a, b) => a.reduce((s, p, i) => s + dist(p, b[i]), 0) / a.length;
   const strokeLen = s => s.reduce((a, p, i) => i ? a + dist(s[i - 1], p) : 0, 0);
+  // 書いた画を、その重心を中心に お手本の画と同じ長さへ伸び縮みさせる（倍率は 1/lim〜lim）
+  function fitLength(u, t, lim) {
+    const k = Math.min(lim, Math.max(1 / lim, strokeLen(t) / Math.max(strokeLen(u), 1e-3)));
+    const cx = u.reduce((a, p) => a + p.x, 0) / u.length, cy = u.reduce((a, p) => a + p.y, 0) / u.length;
+    return u.map(p => ({ x: cx + (p.x - cx) * k, y: cy + (p.y - cy) * k }));
+  }
   const strokeAng = s => Math.atan2(s[s.length - 1].y - s[0].y, s[s.length - 1].x - s[0].x);
   // 画の向きに沿って射影したときの重なり率（短い方に対する割合）
   function overlap(s, t) {
@@ -65,9 +77,13 @@
     const res = { ok: false, reasons: [], tmplStatus: T.map(() => 'missing'), userStatus: [], map: T.map(() => -1), debug: [] };
     const user = userRaw.filter(s => s.length);
     if (!user.length) { res.reasons.push({ type: 'empty' }); res.score = 0; return withMsgs(res); }
-    const U = normalizeTo(user, tmplRaw).map(s => resample(s));
-    const C = U.map(u => T.map(t => meanDist(u, t)));
-    const CR = U.map(u => { const r = u.slice().reverse(); return T.map(t => meanDist(r, t)); });
+    const lf = LENGTH_FREE[opt.tolerance];
+    const U = normalizeTo(user, tmplRaw, lf ? lf.aspect : 1.5).map(s => resample(s));
+    const C0 = U.map(u => T.map(t => meanDist(u, t)));   // 一致率（点数）はこちらで計算する
+    const cost = (u, t) => lf ? Math.min(meanDist(u, t), meanDist(fitLength(u, t, lf.scale), t)) : meanDist(u, t);
+    const C = U.map(u => T.map(t => cost(u, t)));
+    const CR = U.map(u => { const r = u.slice().reverse(); return T.map(t => cost(r, t)); });
+    const CR0 = lf && U.map(u => { const r = u.slice().reverse(); return T.map(t => meanDist(r, t)); });
     const best = (i, j) => Math.min(C[i][j], CR[i][j]);
 
     // 対応づけの候補A: 書いた順そのまま（画数が同じとき）／候補B: 一番近い画どうし
@@ -80,7 +96,10 @@
     for (const [, i, j] of pairs) if (g[j] < 0 && !used.has(i)) { g[j] = i; used.add(i); }
     cand.push(g);
     const badCount = m => m.reduce((n, i, j) => n + (i < 0 || best(i, j) >= th ? 1 : 0), 0);
-    const map = cand.reduce((a, b) => badCount(b) < badCount(a) ? b : a);   // 同数なら候補A（書いた順）を優先
+    // 激激甘: 許容量が広いと書き順を入れ替えても候補Aが通ってしまうので、ずれの合計で選ぶ（Bがはっきり近いときだけB）
+    const total = m => m.reduce((n, i, j) => n + (i < 0 ? 1 : best(i, j)), 0);
+    const map = lf && cand.length === 2 ? (total(cand[1]) < total(cand[0]) * .75 ? cand[1] : cand[0])
+      : cand.reduce((a, b) => badCount(b) < badCount(a) ? b : a);   // 同数なら候補A（書いた順）を優先
     res.map = map;
 
     if (U.length !== T.length) res.reasons.push({ type: 'count', expected: T.length, got: U.length });
@@ -90,7 +109,7 @@
       if (i < 0) return;
       let st;
       if (best(i, j) >= th) { st = 'shape'; res.reasons.push({ type: 'shape', stroke: j }); }
-      else if (CR[i][j] < C[i][j] && C[i][j] >= th) { st = 'dir'; res.reasons.push({ type: 'dir', stroke: j }); }
+      else if (lf ? CR0[i][j] + .04 < C0[i][j] && strokeLen(T[j]) > .12 : CR[i][j] < C[i][j] && C[i][j] >= th) { st = 'dir'; res.reasons.push({ type: 'dir', stroke: j }); }
       else { st = 'ok'; okIdx.push(j); }
       res.tmplStatus[j] = st; res.userStatus[i] = st;
       res.debug.push({ user: i + 1, tmpl: j + 1, cost: C[i][j], costRev: CR[i][j], status: st });
@@ -106,9 +125,9 @@
       res.reasons.push({ type: 'order', stroke: U.length === T.length && firstOff ? firstOff[1] : Math.min(...orderJs) });
     }
     U.forEach((_, i) => { if (!res.userStatus[i]) res.userStatus[i] = 'extra'; });
-    checkLengths(res, U, T, map);
+    if (!lf) checkLengths(res, U, T, map);
     res.ok = !res.reasons.length;
-    res.score = matchScore(user, tmplRaw, C, map, U.length, T.length);
+    res.score = matchScore(user, tmplRaw, C0, map, U.length, T.length);
     res.debug.sort((a, b) => a.tmpl - b.tmpl);
     return withMsgs(res);
   }

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>判定の確認（先生用）</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "M PLUS Rounded 1c", system-ui, sans-serif; background: #f1f5f9; color: #1e293b; }
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 16px; background: #1e293b; color: #fff; }
+header h1 { margin: 0; font-size: 18px; }
+header .tag { background: #f59e0b; color: #1e293b; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+header a { color: #93c5fd; font-weight: 800; font-size: 14px; margin-left: auto; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; padding: 14px 16px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.card { background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 3px #0001; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+select, input, button { font: inherit; font-size: 15px; }
+select, input { padding: 6px 10px; border: 2px solid #cbd5e1; border-radius: 10px; background: #fff; }
+button { border: 0; border-radius: 10px; padding: 8px 14px; font-weight: 800; cursor: pointer; background: #e2e8f0; color: #1e293b; }
+button.main { background: #2563eb; color: #fff; font-size: 18px; padding: 10px 26px; }
+button:active { transform: translateY(1px); }
+#yomi { font-size: 40px; font-weight: 800; text-align: center; margin: 6px 0 2px; letter-spacing: .06em; }
+#note { text-align: center; color: #64748b; font-weight: 800; min-height: 1.4em; }
+#padArea { display: flex; justify-content: center; align-items: center; height: min(52vh, 460px); margin: 8px 0; }
+.wpad { position: relative; background: #fff; border-radius: 16px; box-shadow: 0 0 0 3px #cbd5e1; }
+.wpad canvas { position: absolute; inset: 0; border-radius: 16px; }
+.wpad canvas:last-child { touch-action: none; cursor: crosshair; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.res { border: 3px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; }
+.res h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+.res .big { font-size: 30px; font-weight: 800; }
+.res.ok { border-color: #22c55e; background: #f0fdf4; }
+.res.ng { border-color: #ef4444; background: #fef2f2; }
+.res ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
+.res .show { font-size: 12px; padding: 3px 8px; }
+.res.shown { box-shadow: 0 0 0 3px #2563eb55; }
+.hint { font-size: 13px; color: #64748b; margin: 6px 0 0; line-height: 1.6; }
+#sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; margin-bottom: 8px; }
+#sum div { background: #f1f5f9; border-radius: 10px; padding: 6px 4px; font-size: 12px; font-weight: 800; }
+#sum b { display: block; font-size: 22px; }
+#sum .up b { color: #16a34a; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 5px 4px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+td.w { font-family: "Klee One", serif; font-size: 18px; }
+tr.up td { background: #f0fdf4; }
+#logWrap { max-height: 50vh; overflow: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>判定の確認（先生用）</h1><span class="tag">試験版</span>
+  <a href="index.html?judge=ultraEasy">激激甘でアプリを遊んでみる →</a>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <div class="row">
+        <select id="unitSel"></select>
+        <select id="wordSel"></select>
+        <button id="prevBtn">◀</button><button id="nextBtn">▶</button>
+        <button id="randBtn">🎲 ランダム</button>
+        <span style="flex:1"></span>
+        <input id="freeWord" placeholder="好きな漢字を試す" size="10"><button id="freeBtn">試す</button>
+      </div>
+      <div id="yomi"></div>
+      <div id="note"></div>
+      <div id="padArea"><div id="pad"></div></div>
+      <div class="row" style="justify-content:center">
+        <button id="undoBtn">↩ もどす</button>
+        <button id="clearBtn">🧽 けす</button>
+        <button id="modelBtn">👀 お手本</button>
+        <button id="animBtn">▶ 書き順</button>
+        <button class="main" id="judgeBtn">判定</button>
+      </div>
+      <div class="cmp">
+        <div class="res" id="resA"><h3>激甘（いまのアプリ）<button class="show" data-k="superEasy">色分け</button></h3><div class="big">—</div><ul></ul></div>
+        <div class="res" id="resB"><h3>激激甘（試験版）<button class="show" data-k="ultraEasy">色分け</button></h3><div class="big">—</div><ul></ul></div>
+      </div>
+      <p class="hint">
+        同じ線を「激甘」と「激激甘」の両方で判定します。書いた線の色分けは、選んだほうの判定結果です。<br>
+        激激甘のちがい：①線が短すぎ・長すぎても、お手本の長さにそろえてから形を比べる（0.4〜2.5倍まで）　②「土/士」「未/末」のような長さ関係を見ない　③形のずれの許容量を少し広げる（0.23 → 0.25）<br>
+        画数・向き・書き順は、どちらも同じように判定します。
+      </p>
+    </div>
+  </section>
+  <aside class="card">
+    <div id="sum">
+      <div>判定した数<b id="sN">0</b></div>
+      <div class="up">激激甘で⭕に<b id="sUp">0</b></div>
+      <div>両方⭕<b id="sBoth">0</b></div>
+    </div>
+    <div id="logWrap">
+      <table><thead><tr><th>語</th><th>激甘</th><th>激激甘</th><th>一致率</th></tr></thead><tbody id="log"></tbody></table>
+    </div>
+    <p class="hint">「激激甘で⭕に」は、激甘では❌だったのに激激甘では⭕になった数です。この記録はページを閉じると消えます。</p>
+  </aside>
+</main>
+
+<script src="data/tests-g5-t2.js?v=20261005a"></script>
+<script src="js/kanji-data.js?v=20261005a"></script>
+<script src="js/judge.js?v=20261005a"></script>
+<script src="js/pad.js?v=20261005a"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const LEVELS = ['superEasy', 'ultraEasy'];
+const pad = new WritingPad($('#pad'), { penMode: 'auto', fitHeight: true, maxBox: 420 });
+const units = window.KANJI_TESTS.units;
+let cur = null, tmpls = [], results = {}, shown = 'ultraEasy';
+const stats = { n: 0, up: 0, both: 0 };
+
+units.forEach((u, i) => $('#unitSel').add(new Option(u.name, i)));
+function fillWords() {
+  const u = units[$('#unitSel').value];
+  $('#wordSel').innerHTML = '';
+  u.items.forEach((it, i) => $('#wordSel').add(new Option(`${it.n}. ${it.yomi}（${it.word}）${it.kind === 'read' ? ' [読む問題]' : ''}`, i)));
+}
+function fromSelect() { const u = units[$('#unitSel').value]; load(u.items[$('#wordSel').value]); }
+function step(d) {
+  const ws = $('#wordSel'), us = $('#unitSel');
+  let w = +ws.value + d, u = +us.value;
+  if (w < 0) { u = (u - 1 + units.length) % units.length; us.value = u; fillWords(); w = ws.options.length - 1; }
+  else if (w >= ws.options.length) { u = (u + 1) % units.length; us.value = u; fillWords(); w = 0; }
+  ws.value = w; fromSelect();
+}
+
+async function load(it) {
+  cur = it; results = {};
+  $('#yomi').textContent = it.yomi;
+  $('#note').textContent = it.note ? '例：' + it.note : '';
+  showRes();
+  const segs = KanjiData.parseWord(it.word);
+  const ks = segs.filter(s => s.type === 'kanji').map(s => s.ch);
+  const ts = await Promise.all(ks.map(ch => KanjiData.get(ch).catch(() => null)));
+  if (cur !== it) return;
+  tmpls = ts;
+  const missing = ks.filter((_, i) => !ts[i]);
+  if (missing.length) $('#note').textContent = `「${missing.join('')}」の書き順データがないので判定できません`;
+  pad.setWord(segs, ts);
+}
+
+function judge() {
+  if (!cur || tmpls.some(t => !t) || !pad.strokes.length) return;
+  pad.stopModel();
+  const { strokes } = pad.strokesByCell();
+  const ks = [...cur.word].filter(KanjiData.isKanji);
+  for (const lv of LEVELS) {
+    const r = KanjiJudge.judgeWord(strokes, tmpls.map(t => t.lines), { tolerance: lv });
+    r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (ks.length > 1 ? `「${ks[k]}」 ` : '') + m));
+    results[lv] = r;
+  }
+  showRes();
+  const a = results.superEasy, b = results.ultraEasy;
+  stats.n++; if (!a.ok && b.ok) stats.up++; if (a.ok && b.ok) stats.both++;
+  $('#sN').textContent = stats.n; $('#sUp').textContent = stats.up; $('#sBoth').textContent = stats.both;
+  const tr = document.createElement('tr');
+  if (!a.ok && b.ok) tr.className = 'up';
+  tr.innerHTML = `<td class="w">${esc(cur.word)}</td><td>${a.ok ? '⭕' : '❌'}</td><td>${b.ok ? '⭕' : '❌'}</td><td>${b.score}%</td>`;
+  $('#log').prepend(tr);
+}
+
+function showRes() {
+  for (const [id, lv] of [['#resA', 'superEasy'], ['#resB', 'ultraEasy']]) {
+    const el = $(id), r = results[lv];
+    el.className = 'res' + (r ? (r.ok ? ' ok' : ' ng') : '') + (r && shown === lv ? ' shown' : '');
+    el.querySelector('.big').textContent = r ? `${r.ok ? '⭕' : '❌'} ${r.score}%` : '—';
+    const ul = el.querySelector('ul'); ul.innerHTML = '';
+    if (r) for (const m of (r.ok ? ['問題なし'] : r.msgList)) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
+  }
+  if (results[shown]) pad.showResult(results[shown]);
+}
+
+$('#unitSel').onchange = () => { fillWords(); fromSelect(); };
+$('#wordSel').onchange = fromSelect;
+$('#prevBtn').onclick = () => step(-1);
+$('#nextBtn').onclick = () => step(1);
+$('#randBtn').onclick = () => {
+  const u = Math.floor(Math.random() * units.length);
+  $('#unitSel').value = u; fillWords();
+  $('#wordSel').value = Math.floor(Math.random() * units[u].items.length); fromSelect();
+};
+$('#freeBtn').onclick = () => {
+  const w = $('#freeWord').value.trim();
+  if (w && [...w].some(KanjiData.isKanji)) load({ word: w, yomi: w });
+};
+$('#freeWord').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) $('#freeBtn').click(); };
+$('#undoBtn').onclick = () => { pad.undo(); results = {}; showRes(); };
+$('#clearBtn').onclick = () => { pad.clear(); results = {}; showRes(); };
+$('#modelBtn').onclick = () => pad.toggleModel();
+$('#animBtn').onclick = () => pad.animateModel();
+$('#judgeBtn').onclick = judge;
+document.querySelectorAll('.res .show').forEach(b => b.onclick = () => { shown = b.dataset.k; showRes(); });
+addEventListener('resize', () => pad.layout());
+
+fillWords(); fromSelect();
+</script>
+</body>
+</html>
