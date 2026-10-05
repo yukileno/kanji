@@ -10,9 +10,10 @@
   //   ・各画の長さが お手本の 0.4〜2.5倍 なら、長さをそろえてから形を比べる
   //   ・長さ関係（土/士・未/末）のチェックをしない
   //   ・字全体の縦横比のずれは 2倍まで吸収
-  //   画数・向き・書き順は きびしく判定する（形の許容量を広げても見のがさないよう、形とは別に調べる）
+  //   画数・向き・書き順は ほかの段階と同じく、形とは別にきびしく判定する
   const LENGTH_FREE = { ultraEasy: { scale: 2.5, aspect: 2 } };
   const MAX_SHAPE_MSGS = 2;
+  const ORDER_MARGIN = .06;   // 書き順: 一番近い画どうしの対応（候補B）が、書いた順（候補A）よりこれだけ近ければ順番ちがいとみなす
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   function resample(pts, n = N) {
@@ -54,6 +55,14 @@
     const cx = u.reduce((a, p) => a + p.x, 0) / u.length, cy = u.reduce((a, p) => a + p.y, 0) / u.length;
     return u.map(p => ({ x: cx + (p.x - cx) * k, y: cy + (p.y - cy) * k }));
   }
+  // 向き: 始点→終点の向きがお手本と反対か（始点と終点が近い画・点のような短い画は見ない）
+  function chordReversed(u, t) {
+    const vx = u[u.length - 1].x - u[0].x, vy = u[u.length - 1].y - u[0].y;
+    const wx = t[t.length - 1].x - t[0].x, wy = t[t.length - 1].y - t[0].y;
+    const lu = Math.hypot(vx, vy), lt = Math.hypot(wx, wy);
+    if (lt < .05 || lt < strokeLen(t) * .35 || lu < .03) return false;
+    return (vx * wx + vy * wy) / (lu * lt) < -.3;
+  }
   const strokeAng = s => Math.atan2(s[s.length - 1].y - s[0].y, s[s.length - 1].x - s[0].x);
   // 画の向きに沿って射影したときの重なり率（短い方に対する割合）
   function overlap(s, t) {
@@ -83,7 +92,7 @@
     const cost = (u, t) => lf ? Math.min(meanDist(u, t), meanDist(fitLength(u, t, lf.scale), t)) : meanDist(u, t);
     const C = U.map(u => T.map(t => cost(u, t)));
     const CR = U.map(u => { const r = u.slice().reverse(); return T.map(t => cost(r, t)); });
-    const CR0 = lf && U.map(u => { const r = u.slice().reverse(); return T.map(t => meanDist(r, t)); });
+    const CR0 = U.map(u => { const r = u.slice().reverse(); return T.map(t => meanDist(r, t)); });
     const best = (i, j) => Math.min(C[i][j], CR[i][j]);
 
     // 対応づけの候補A: 書いた順そのまま（画数が同じとき）／候補B: 一番近い画どうし
@@ -95,11 +104,9 @@
     const g = T.map(() => -1), used = new Set();
     for (const [, i, j] of pairs) if (g[j] < 0 && !used.has(i)) { g[j] = i; used.add(i); }
     cand.push(g);
-    const badCount = m => m.reduce((n, i, j) => n + (i < 0 || best(i, j) >= th ? 1 : 0), 0);
-    // 激激甘: 許容量が広いと書き順を入れ替えても候補Aが通ってしまうので、ずれの合計で選ぶ（Bがはっきり近いときだけB）
+    // 許容量の中に収まっていれば、書き順を入れ替えても候補Aが通ってしまうので、ずれの合計で選ぶ（Bがはっきり近いときだけB）
     const total = m => m.reduce((n, i, j) => n + (i < 0 ? 1 : best(i, j)), 0);
-    const map = lf && cand.length === 2 ? (total(cand[1]) < total(cand[0]) * .75 ? cand[1] : cand[0])
-      : cand.reduce((a, b) => badCount(b) < badCount(a) ? b : a);   // 同数なら候補A（書いた順）を優先
+    const map = cand.length === 2 ? (total(cand[1]) < total(cand[0]) - ORDER_MARGIN ? cand[1] : cand[0]) : cand[0];
     res.map = map;
 
     if (U.length !== T.length) res.reasons.push({ type: 'count', expected: T.length, got: U.length });
@@ -109,7 +116,8 @@
       if (i < 0) return;
       let st;
       if (best(i, j) >= th) { st = 'shape'; res.reasons.push({ type: 'shape', stroke: j }); }
-      else if (lf ? CR0[i][j] + .04 < C0[i][j] && strokeLen(T[j]) > .12 : CR[i][j] < C[i][j] && C[i][j] >= th) { st = 'dir'; res.reasons.push({ type: 'dir', stroke: j }); }
+      // 向き: 形の許容量とは別に、始点→終点が反対か、逆向きのほうがはっきり近ければ❌（点のような短い画は見ない）
+      else if (chordReversed(U[i], T[j]) || CR0[i][j] + .04 < C0[i][j] && strokeLen(T[j]) > .12) { st = 'dir'; res.reasons.push({ type: 'dir', stroke: j }); }
       else { st = 'ok'; okIdx.push(j); }
       res.tmplStatus[j] = st; res.userStatus[i] = st;
       res.debug.push({ user: i + 1, tmpl: j + 1, cost: C[i][j], costRev: CR[i][j], status: st });

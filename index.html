@@ -901,12 +901,12 @@ button.retry {
 <div id="dlg" hidden><div class="box"><p id="dlgMsg"></p><small id="dlgSub"></small>
   <div class="row"><button class="retry" id="dlgYes">やめる</button><button class="go" id="dlgNo">つづける</button></div></div></div>
 
-<script src="data/tests-g5-t2.js?v=20261005a"></script>
-<script src="js/kanji-data.js?v=20261005a"></script>
-<script src="js/judge.js?v=20261005a"></script>
-<script src="js/pad.js?v=20261005a"></script>
-<script src="js/sound.js?v=20261005a"></script>
-<script src="js/fx.js?v=20261005a"></script>
+<script src="data/tests-g5-t2.js?v=20261005c"></script>
+<script src="js/kanji-data.js?v=20261005c"></script>
+<script src="js/judge.js?v=20261005c"></script>
+<script src="js/pad.js?v=20261005c"></script>
+<script src="js/sound.js?v=20261005c"></script>
+<script src="js/fx.js?v=20261005c"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -923,7 +923,7 @@ const RULE = {
   feverMax: 5,               // FEVER倍率の上限
   repeatRate: .5,            // 同じ日に同じ語をもう一度書いたときの点数の割合
   allCount: 20,              // 「ぜんぶの単元から」の問題数
-  tolerance: 'superEasy',    // 判定のきびしさ（ultraEasy=激激甘 / superEasy=激甘 / easy / normal / strict）
+  tolerance: 'ultraEasy',    // 形の判定のきびしさ（ultraEasy=激激甘 / superEasy=激甘 / easy / normal / strict）。全コース共通
 };
 // 先生の確認用: index.html?judge=ultraEasy で判定のきびしさを切り替える（試験版）
 const JUDGE_PARAM = new URLSearchParams(location.search).get('judge');
@@ -931,10 +931,11 @@ if (JUDGE_PARAM && KanjiJudge.LEVELS[JUDGE_PARAM]) RULE.tolerance = JUDGE_PARAM;
 const JUDGE_NAMES = { ultraEasy: '激激甘', superEasy: '激甘', easy: 'あまめ', normal: 'ふつう', strict: 'きびしめ' };
 
 // コース: かんたん・ふつう・むずかしい
+//   rate: クリアに必要な正解の割合 / minPct: ⭕にするのに必要な一致率（形・書き順が合っていることが前提）
 const COURSES = [
-  { id: 'easy', name: 'かんたん', medal: '🥉', badge: 'assets/badge_easy.svg', rate: .6 },
-  { id: 'normal', name: 'ふつう', medal: '🥈', badge: 'assets/badge_normal.svg', rate: .8 },
-  { id: 'hard', name: 'むずかしい', medal: '🥇', badge: 'assets/badge_hard.svg', rate: 1 },
+  { id: 'easy', name: 'かんたん', medal: '🥉', badge: 'assets/badge_easy.svg', rate: .6, minPct: 0 },
+  { id: 'normal', name: 'ふつう', medal: '🥈', badge: 'assets/badge_normal.svg', rate: .8, minPct: 75 },
+  { id: 'hard', name: 'むずかしい', medal: '🥇', badge: 'assets/badge_hard.svg', rate: 1, minPct: 85 },
 ];
 
 const RANKS = [
@@ -1073,6 +1074,7 @@ function renderCourses() {
       <div class="courseInfo">
         <span>${lock ? '🔒' : c.medal} ${c.name}</span>
         <small>${n}問中 ${need(n, c)}問 正解でクリア</small>
+        <small>${c.minPct ? `一致率 ${c.minPct}%以上で ⭕` : '形と書き順が合えば ⭕'}</small>
         ${done ? `<small class="ok">✔ クリアずみ（${store.clears[u.id][c.id].date}）</small>` : lock ? `<small>${COURSES[i - 1].name}を クリアすると あそべる</small>` : ''}
       </div>
     `;
@@ -1209,8 +1211,10 @@ function judgeQ() {
   const r = judgeCurrent(); if (!r) return;
   R.busy = true;
   const it = curItem, n = kanjiCount(it.word);
+  // 形・書き順が合っていても、一致率がコースの基準に届かなければ❌
+  const lowPct = r.ok && r.score < R.course.minPct;
 
-  if (r.ok) {
+  if (r.ok && !lowPct) {
     const pct = r.score;
     R.ok++;
     const prevMult = feverMult(R.streak);
@@ -1266,14 +1270,14 @@ function judgeQ() {
     }, 1200);
   } else {
     R.ng++; R.streak = 0;
-    R.log.push({ item: it, ok: false, pct: 0, pts: 0 });
+    R.log.push({ item: it, ok: false, pct: lowPct ? r.score : 0, pts: 0 });
     if (window.SFX) window.SFX.ng();
     FX.shake($('#padArea'));
     setFever(1); drawStreak(); drawHearts(true); drawGoal();
     const failedNow = R.ng === R.n - R.req + 1;
     $('#rvAnswer').innerHTML = `こたえ：<span>${esc(it.word)}</span>`;
     $('#rvHeart').textContent = failedNow ? '💔 ハートがなくなった… でも さいごまで 書いて れんしゅうしよう!' : (R.n - R.req - R.ng >= 0 ? `ハート のこり ${R.n - R.req - R.ng}` : '');
-    fillList($('#rvMsgs'), r.msgList);
+    fillList($('#rvMsgs'), lowPct ? [`形と書き順は OK! あとは ていねいに（一致率 ${r.score}% ／ ${R.course.name}は ${R.course.minPct}%以上で ⭕）`] : r.msgList);
     $('#judgeBtn').hidden = $('#tools').hidden = true;
     $('#reviewCard').hidden = false;
   }
@@ -1374,7 +1378,7 @@ function finishCourse() {
 
   run.log.forEach((l, i) => {
     const d = document.createElement('div'); d.className = 'si'; d.style.animationDelay = (i * 0.04) + 's';
-    d.innerHTML = `<div><div class="w">${esc(l.item.word)}</div><div class="y">${esc(l.item.yomi)}</div></div><div class="r">${l.ok ? `⭕ ${l.pct}%<br>+${l.pts.toLocaleString()}` : '❌'}</div>`;
+    d.innerHTML = `<div><div class="w">${esc(l.item.word)}</div><div class="y">${esc(l.item.yomi)}</div></div><div class="r">${l.ok ? `⭕ ${l.pct}%<br>+${l.pts.toLocaleString()}` : l.pct ? `❌ ${l.pct}%` : '❌'}</div>`;
     box.appendChild(d);
   });
 

@@ -27,31 +27,28 @@ button:active { transform: translateY(1px); }
 .wpad { position: relative; background: #fff; border-radius: 16px; box-shadow: 0 0 0 3px #cbd5e1; }
 .wpad canvas { position: absolute; inset: 0; border-radius: 16px; }
 .wpad canvas:last-child { touch-action: none; cursor: crosshair; }
-.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-.res { border: 3px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; }
+.res { border: 3px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; margin-top: 10px; }
+.courses { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+.courses span { background: #f1f5f9; border-radius: 999px; padding: 3px 12px; font-weight: 800; font-size: 14px; }
 .res h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
 .res .big { font-size: 30px; font-weight: 800; }
 .res.ok { border-color: #22c55e; background: #f0fdf4; }
 .res.ng { border-color: #ef4444; background: #fef2f2; }
 .res ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
-.res .show { font-size: 12px; padding: 3px 8px; }
-.res.shown { box-shadow: 0 0 0 3px #2563eb55; }
 .hint { font-size: 13px; color: #64748b; margin: 6px 0 0; line-height: 1.6; }
-#sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; margin-bottom: 8px; }
+#sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; margin-bottom: 8px; }
 #sum div { background: #f1f5f9; border-radius: 10px; padding: 6px 4px; font-size: 12px; font-weight: 800; }
 #sum b { display: block; font-size: 22px; }
-#sum .up b { color: #16a34a; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 5px 4px; border-bottom: 1px solid #e2e8f0; text-align: center; }
 td.w { font-family: "Klee One", serif; font-size: 18px; }
-tr.up td { background: #f0fdf4; }
 #logWrap { max-height: 50vh; overflow: auto; }
 </style>
 </head>
 <body>
 <header>
-  <h1>判定の確認（先生用）</h1><span class="tag">試験版</span>
-  <a href="index.html?judge=ultraEasy">激激甘でアプリを遊んでみる →</a>
+  <h1>判定の確認（先生用）</h1>
+  <a href="index.html">アプリを開く →</a>
 </header>
 <main>
   <section>
@@ -74,43 +71,48 @@ tr.up td { background: #f0fdf4; }
         <button id="animBtn">▶ 書き順</button>
         <button class="main" id="judgeBtn">判定</button>
       </div>
-      <div class="cmp">
-        <div class="res" id="resA"><h3>激甘（いまのアプリ）<button class="show" data-k="superEasy">色分け</button></h3><div class="big">—</div><ul></ul></div>
-        <div class="res" id="resB"><h3>激激甘（試験版）<button class="show" data-k="ultraEasy">色分け</button></h3><div class="big">—</div><ul></ul></div>
+      <div class="res" id="res">
+        <h3>判定（激激甘）</h3>
+        <div class="big">—</div>
+        <div class="courses" id="courses"></div>
+        <ul></ul>
       </div>
       <p class="hint">
-        同じ線を「激甘」と「激激甘」の両方で判定します。書いた線の色分けは、選んだほうの判定結果です。<br>
-        激激甘のちがい：①線が短すぎ・長すぎても、お手本の長さにそろえてから形を比べる（0.4〜2.5倍まで）　②「土/士」「未/末」のような長さ関係を見ない　③形のずれの許容量を少し広げる（0.23 → 0.25）<br>
-        画数・向き・書き順は、どちらも同じように判定します。
+        アプリと同じ判定です。形の判定は全コース共通で「激激甘」：画数・書き順・向き・だいたいの形を見ます（線の長さ・「土/士」のような長さ関係は見ません）。<br>
+        そのうえで、コースごとに一致率（ていねいさ）の基準があります：<span id="ruleText"></span>
       </p>
     </div>
   </section>
   <aside class="card">
-    <div id="sum">
-      <div>判定した数<b id="sN">0</b></div>
-      <div class="up">激激甘で⭕に<b id="sUp">0</b></div>
-      <div>両方⭕<b id="sBoth">0</b></div>
-    </div>
+    <div id="sum"></div>
     <div id="logWrap">
-      <table><thead><tr><th>語</th><th>激甘</th><th>激激甘</th><th>一致率</th></tr></thead><tbody id="log"></tbody></table>
+      <table><thead><tr><th>語</th><th>形</th><th>一致率</th><th>🥉</th><th>🥈</th><th>🥇</th></tr></thead><tbody id="log"></tbody></table>
     </div>
-    <p class="hint">「激激甘で⭕に」は、激甘では❌だったのに激激甘では⭕になった数です。この記録はページを閉じると消えます。</p>
+    <p class="hint">右の数は、各コースで⭕になった数です。この記録はページを閉じると消えます。</p>
   </aside>
 </main>
 
-<script src="data/tests-g5-t2.js?v=20261005a"></script>
-<script src="js/kanji-data.js?v=20261005a"></script>
-<script src="js/judge.js?v=20261005a"></script>
-<script src="js/pad.js?v=20261005a"></script>
+<script src="data/tests-g5-t2.js?v=20261005c"></script>
+<script src="js/kanji-data.js?v=20261005c"></script>
+<script src="js/judge.js?v=20261005c"></script>
+<script src="js/pad.js?v=20261005c"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const LEVELS = ['superEasy', 'ultraEasy'];
+// index.html の RULE.tolerance・COURSES と同じ値にしておく
+const TOLERANCE = 'ultraEasy';
+const COURSES = [
+  { name: 'かんたん', medal: '🥉', minPct: 0 },
+  { name: 'ふつう', medal: '🥈', minPct: 75 },
+  { name: 'むずかしい', medal: '🥇', minPct: 85 },
+];
+const pass = (r, c) => r.ok && r.score >= c.minPct;
 const pad = new WritingPad($('#pad'), { penMode: 'auto', fitHeight: true, maxBox: 420 });
 const units = window.KANJI_TESTS.units;
-let cur = null, tmpls = [], results = {}, shown = 'ultraEasy';
-const stats = { n: 0, up: 0, both: 0 };
+let cur = null, tmpls = [], result = null;
+const stats = { n: 0, c: COURSES.map(() => 0) };
+$('#ruleText').textContent = COURSES.map(c => `${c.medal}${c.name} ${c.minPct ? c.minPct + '%以上' : 'なし'}`).join('　');
 
 units.forEach((u, i) => $('#unitSel').add(new Option(u.name, i)));
 function fillWords() {
@@ -128,7 +130,7 @@ function step(d) {
 }
 
 async function load(it) {
-  cur = it; results = {};
+  cur = it; result = null;
   $('#yomi').textContent = it.yomi;
   $('#note').textContent = it.note ? '例：' + it.note : '';
   showRes();
@@ -147,30 +149,28 @@ function judge() {
   pad.stopModel();
   const { strokes } = pad.strokesByCell();
   const ks = [...cur.word].filter(KanjiData.isKanji);
-  for (const lv of LEVELS) {
-    const r = KanjiJudge.judgeWord(strokes, tmpls.map(t => t.lines), { tolerance: lv });
-    r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (ks.length > 1 ? `「${ks[k]}」 ` : '') + m));
-    results[lv] = r;
-  }
+  const r = KanjiJudge.judgeWord(strokes, tmpls.map(t => t.lines), { tolerance: TOLERANCE });
+  r.msgList = r.chars.flatMap((c, k) => c.ok ? [] : c.msgs.map(m => (ks.length > 1 ? `「${ks[k]}」 ` : '') + m));
+  result = r;
   showRes();
-  const a = results.superEasy, b = results.ultraEasy;
-  stats.n++; if (!a.ok && b.ok) stats.up++; if (a.ok && b.ok) stats.both++;
-  $('#sN').textContent = stats.n; $('#sUp').textContent = stats.up; $('#sBoth').textContent = stats.both;
+  stats.n++; COURSES.forEach((c, i) => { if (pass(r, c)) stats.c[i]++; });
+  drawSum();
   const tr = document.createElement('tr');
-  if (!a.ok && b.ok) tr.className = 'up';
-  tr.innerHTML = `<td class="w">${esc(cur.word)}</td><td>${a.ok ? '⭕' : '❌'}</td><td>${b.ok ? '⭕' : '❌'}</td><td>${b.score}%</td>`;
+  tr.innerHTML = `<td class="w">${esc(cur.word)}</td><td>${r.ok ? '⭕' : '❌'}</td><td>${r.score}%</td>` + COURSES.map(c => `<td>${pass(r, c) ? '⭕' : '❌'}</td>`).join('');
   $('#log').prepend(tr);
+}
+function drawSum() {
+  $('#sum').innerHTML = `<div>判定した数<b>${stats.n}</b></div>` + COURSES.map((c, i) => `<div>${c.medal}${c.name}<b>${stats.c[i]}</b></div>`).join('');
 }
 
 function showRes() {
-  for (const [id, lv] of [['#resA', 'superEasy'], ['#resB', 'ultraEasy']]) {
-    const el = $(id), r = results[lv];
-    el.className = 'res' + (r ? (r.ok ? ' ok' : ' ng') : '') + (r && shown === lv ? ' shown' : '');
-    el.querySelector('.big').textContent = r ? `${r.ok ? '⭕' : '❌'} ${r.score}%` : '—';
-    const ul = el.querySelector('ul'); ul.innerHTML = '';
-    if (r) for (const m of (r.ok ? ['問題なし'] : r.msgList)) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
-  }
-  if (results[shown]) pad.showResult(results[shown]);
+  const el = $('#res'), r = result;
+  el.className = 'res' + (r ? (r.ok ? ' ok' : ' ng') : '');
+  el.querySelector('.big').textContent = r ? `形・書き順 ${r.ok ? '⭕' : '❌'}　一致率 ${r.score}%` : '—';
+  $('#courses').innerHTML = r ? COURSES.map(c => `<span>${c.medal}${c.name} ${pass(r, c) ? '⭕' : '❌'}</span>`).join('') : '';
+  const ul = el.querySelector('ul'); ul.innerHTML = '';
+  if (r) for (const m of (r.ok ? ['形・書き順は問題なし'] : r.msgList)) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); }
+  if (r) pad.showResult(r);
 }
 
 $('#unitSel').onchange = () => { fillWords(); fromSelect(); };
@@ -187,15 +187,14 @@ $('#freeBtn').onclick = () => {
   if (w && [...w].some(KanjiData.isKanji)) load({ word: w, yomi: w });
 };
 $('#freeWord').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) $('#freeBtn').click(); };
-$('#undoBtn').onclick = () => { pad.undo(); results = {}; showRes(); };
-$('#clearBtn').onclick = () => { pad.clear(); results = {}; showRes(); };
+$('#undoBtn').onclick = () => { pad.undo(); result = null; showRes(); };
+$('#clearBtn').onclick = () => { pad.clear(); result = null; showRes(); };
 $('#modelBtn').onclick = () => pad.toggleModel();
 $('#animBtn').onclick = () => pad.animateModel();
 $('#judgeBtn').onclick = judge;
-document.querySelectorAll('.res .show').forEach(b => b.onclick = () => { shown = b.dataset.k; showRes(); });
 addEventListener('resize', () => pad.layout());
 
-fillWords(); fromSelect();
+drawSum(); fillWords(); fromSelect();
 </script>
 </body>
 </html>
