@@ -104,8 +104,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const TOLERANCE = 'ultraEasy';
 const COURSES = [
   { name: 'かんたん', medal: '🥉', minPct: 0 },
-  { name: 'ふつう', medal: '🥈', minPct: 70 },
-  { name: 'むずかしい', medal: '🥇', minPct: 80 },
+  { name: 'ふつう', medal: '🥈', minPct: 65 },
+  { name: 'むずかしい', medal: '🥇', minPct: 75 },
 ];
 const pass = (r, c) => r.ok && r.score >= c.minPct;
 const pad = new WritingPad($('#pad'), { penMode: 'auto', fitHeight: true, maxBox: 420 });
