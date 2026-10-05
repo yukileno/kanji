@@ -971,10 +971,12 @@ const rankOf = p => RANKS.find(r => p >= r[0]);
 function fillList(ul, msgs) { ul.innerHTML = ''; for (const m of msgs) { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); } }
 
 /* ===== 単元データとイラスト ===== */
-const allWrite = () => TESTS.units.flatMap(u => u.items.filter(i => i.kind === 'write').map(i => Object.assign({ unit: u.name }, i)));
+// 読む問題（kind: 'read'）も、よみを見て漢字を書く問題として出す
+const isQ = i => i.kind === 'write' || i.kind === 'read';
+const allWrite = () => TESTS.units.flatMap(u => u.items.filter(isQ).map(i => Object.assign({ unit: u.name }, i)));
 const UNITS = [{ id: 'all', name: 'ぜんぶの単元から', all: true }, ...TESTS.units.map(u => ({ id: u.id, name: u.name, items: u.items }))];
 const unitById = id => UNITS.find(u => u.id === id);
-const qCount = u => u.all ? Math.min(RULE.allCount, allWrite().length) : u.items.filter(i => i.kind === 'write').length;
+const qCount = u => u.all ? Math.min(RULE.allCount, allWrite().length) : u.items.filter(isQ).length;
 const need = (n, c) => Math.ceil(n * c.rate);
 const cleared = (uid, cid) => !!(store.clears[uid] && store.clears[uid][cid]);
 const unlocked = (uid, ci) => ci === 0 || cleared(uid, COURSES[ci - 1].id);
@@ -1137,7 +1139,7 @@ function judgeCurrent() {
 let R = null;
 function startCourse(u, course) {
   ac();
-  const list = shuffle(u.all ? allWrite() : u.items.filter(i => i.kind === 'write').map(i => Object.assign({ unit: '' }, i))).slice(0, qCount(u));
+  const list = shuffle(u.all ? allWrite() : u.items.filter(isQ).map(i => Object.assign({ unit: '' }, i))).slice(0, qCount(u));
   if (!list.length) return;
   const n = list.length, req = need(n, course);
   R = { unit: u, course, list, idx: 0, n, req, ok: 0, ng: 0, pts: 0, streak: 0, maxStreak: 0, gold: 0, log: [], busy: false, ended: false };
